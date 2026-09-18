@@ -232,6 +232,20 @@ test "dotted field names are accepted" {
 }
 
 ///|
+/// Hyphenated field names (e.g. RabbitMQ's queue arguments like
+/// `x-max-priority`) are accepted and survive an encode/decode
+/// roundtrip.
+test "hyphenated field names are accepted" {
+  let t = FieldTable::new()
+  t.set("x-max-priority", FieldValue::I8(10))
+  let w = @codec.Writer::new()
+  t.encode(w)
+  let r = @codec.Reader::new(w.to_bytes())
+  let back = FieldTable::decode(r)
+  @test.assert_eq(back.get("x-max-priority"), Some(FieldValue::I8(10)))
+}
+
+///|
 /// An unknown tag octet is reported as `InvalidTag` with the octet.
 test "unknown tag raises" {
   let r = @codec.Reader::new(b"\x5a")
