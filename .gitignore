@@ -5,3 +5,4 @@ target
 .mooncakes/
 .moonagent/prompts/
 prompts/
+pkg.generated.mbti
