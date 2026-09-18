@@ -297,7 +297,9 @@ test "malformed methods raise" {
   }
   let err = try {
     let _ = ConnectionMethod::decode(
-      @codec.Reader::new(b"\x00\x0a\x00\x0a\x00\x09\x00\x00\x00\x03\x01\x5a\x5a"),
+      @codec.Reader::new(
+        b"\x00\x0a\x00\x0a\x00\x09\x00\x00\x00\x03\x01\x5a\x5a",
+      ),
     )
     None
   } catch {

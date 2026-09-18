@@ -29,4 +29,7 @@ pub suberror ConnectionError {
   UnexpectedClass(UInt16)
   /// The method-id does not belong to the Connection class.
   UnknownMethod(UInt16)
+  /// The handshake received or was asked to build a method that its
+  /// current phase does not allow.
+  UnexpectedMethod(String)
 }
