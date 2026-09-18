@@ -108,3 +108,66 @@ test "reply text over 255 bytes raises" {
   }
   @test.assert_eq(raised, true)
 }
+
+///|
+/// Decode one channel-class method payload.
+fn chan_dec(payload : Bytes) -> ChannelMethod raise ChannelError {
+  ChannelMethod::decode(@codec.Reader::new(payload))
+}
+
+///|
+/// Golden decode: the golden encode vectors read back to their values.
+test "channel methods golden decode" {
+  @test.assert_eq(
+    chan_dec(b"\x00\x14\x00\x0a\x00"),
+    ChannelMethod::ChannelOpen(ChannelOpen::{ reserved_1: "", }),
+  )
+  @test.assert_eq(
+    chan_dec(b"\x00\x14\x00\x0b\x00\x00\x00\x00"),
+    ChannelMethod::ChannelOpenOk(ChannelOpenOk::{ reserved_1: "", }),
+  )
+  @test.assert_eq(
+    chan_dec(b"\x00\x14\x00\x14\x01"),
+    ChannelMethod::ChannelFlow(ChannelFlow::{ active: true, }),
+  )
+  @test.assert_eq(
+    chan_dec(b"\x00\x14\x00\x14\x00"),
+    ChannelMethod::ChannelFlow(ChannelFlow::{ active: false, }),
+  )
+  @test.assert_eq(
+    chan_dec(b"\x00\x14\x00\x15\x01"),
+    ChannelMethod::ChannelFlowOk(ChannelFlowOk::{ active: true, }),
+  )
+  @test.assert_eq(
+    chan_dec(b"\x00\x14\x00\x28\x00\xc8\x02ok\x00\x3c\x00\x28"),
+    ChannelMethod::ChannelClose(ChannelClose::{
+      reply_code: (200).to_uint16(),
+      reply_text: "ok",
+      class_id: (60).to_uint16(),
+      method_id: (40).to_uint16(),
+    }),
+  )
+  @test.assert_eq(chan_dec(b"\x00\x14\x00\x29"), ChannelMethod::ChannelCloseOk)
+}
+
+///|
+/// Every channel-class method survives an encode/decode roundtrip.
+test "channel methods roundtrip" {
+  for
+    m in [
+      ChannelMethod::ChannelOpen(ChannelOpen::{ reserved_1: "", }),
+      ChannelMethod::ChannelOpenOk(ChannelOpenOk::{ reserved_1: "", }),
+      ChannelMethod::ChannelFlow(ChannelFlow::{ active: true, }),
+      ChannelMethod::ChannelFlow(ChannelFlow::{ active: false, }),
+      ChannelMethod::ChannelFlowOk(ChannelFlowOk::{ active: true, }),
+      ChannelMethod::ChannelClose(ChannelClose::{
+        reply_code: (320).to_uint16(),
+        reply_text: "bye",
+        class_id: (0).to_uint16(),
+        method_id: (0).to_uint16(),
+      }),
+      ChannelMethod::ChannelCloseOk,
+    ] {
+    @test.assert_eq(chan_dec(chan_enc(m)), m)
+  }
+}

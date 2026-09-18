@@ -7,4 +7,5 @@ import {
 
 import {
   "moonbitlang/core/test",
+  "ddd-1234d/moon-amqp/frame",
 } for "test"

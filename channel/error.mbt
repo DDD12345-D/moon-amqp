@@ -17,6 +17,8 @@
 /// and queue-class methods (§3.2.2): channel lifecycle and topology
 /// declarations.
 pub suberror ChannelError {
+  /// Input ended before the method's arguments were complete.
+  Truncated
   /// A string in the method was not valid UTF-8.
   InvalidUtf8
   /// A value does not fit its wire type (e.g. a short string over
@@ -25,4 +27,8 @@ pub suberror ChannelError {
   ValueOutOfRange(String)
   /// A field table inside the method was malformed.
   InvalidTable(String)
+  /// The class-id is not 20 (channel), 40 (exchange) or 50 (queue).
+  UnexpectedClass(UInt16)
+  /// The method-id does not belong to the given class-id.
+  UnknownMethod(UInt16, UInt16)
 }

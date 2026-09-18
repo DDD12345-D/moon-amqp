@@ -440,6 +440,280 @@ pub fn ChannelMethod::encode(
 }
 
 ///|
+/// Read one channel-, exchange- or queue-class method from `r`,
+/// dispatching on the class id and then the method id.
+///
+/// Raises `ChannelError::UnexpectedClass` when the class-id is not 20,
+/// 40 or 50, `ChannelError::UnknownMethod` for a method-id outside the
+/// given class, `ChannelError::Truncated` for input that ends early,
+/// `ChannelError::InvalidUtf8` for malformed strings, and
+/// `ChannelError::InvalidTable` for a malformed field table.
+pub fn ChannelMethod::decode(
+  r : @codec.Reader,
+) -> ChannelMethod raise ChannelError {
+  let class_id = next_u16(r)
+  let method_id = next_u16(r)
+  match class_id.to_uint().reinterpret_as_int() {
+    20 => decode_channel_method(r, method_id)
+    40 => decode_exchange_method(r, method_id)
+    50 => decode_queue_method(r, method_id)
+    _ => raise ChannelError::UnexpectedClass(class_id)
+  }
+}
+
+///|
+/// Channel-class (20) method dispatch.
+fn decode_channel_method(
+  r : @codec.Reader,
+  method_id : UInt16,
+) -> ChannelMethod raise ChannelError {
+  match method_id.to_uint().reinterpret_as_int() {
+    10 =>
+      ChannelMethod::ChannelOpen(ChannelOpen::{ reserved_1: next_shortstr(r), })
+    11 =>
+      ChannelMethod::ChannelOpenOk(ChannelOpenOk::{
+        reserved_1: next_longstr(r),
+      })
+    20 => ChannelMethod::ChannelFlow(ChannelFlow::{ active: next_bool(r), })
+    21 => ChannelMethod::ChannelFlowOk(ChannelFlowOk::{ active: next_bool(r), })
+    40 =>
+      ChannelMethod::ChannelClose(ChannelClose::{
+        reply_code: next_u16(r),
+        reply_text: next_shortstr(r),
+        class_id: next_u16(r),
+        method_id: next_u16(r),
+      })
+    41 => ChannelMethod::ChannelCloseOk
+    _ => raise ChannelError::UnknownMethod(channel_class_id, method_id)
+  }
+}
+
+///|
+/// Exchange-class (40) method dispatch.
+fn decode_exchange_method(
+  r : @codec.Reader,
+  method_id : UInt16,
+) -> ChannelMethod raise ChannelError {
+  match method_id.to_uint().reinterpret_as_int() {
+    10 => {
+      let reserved_1 = next_u16(r)
+      let exchange = next_shortstr(r)
+      let exchange_type = next_shortstr(r)
+      let flags = next_byte(r).to_int()
+      ChannelMethod::ExchangeDeclare(ExchangeDeclare::{
+        reserved_1,
+        exchange,
+        exchange_type,
+        passive: (flags & 1) != 0,
+        durable: (flags & 2) != 0,
+        auto_delete: (flags & 4) != 0,
+        internal: (flags & 8) != 0,
+        no_wait: (flags & 16) != 0,
+        arguments: next_table(r),
+      })
+    }
+    11 => ChannelMethod::ExchangeDeclareOk
+    20 => {
+      let reserved_1 = next_u16(r)
+      let exchange = next_shortstr(r)
+      let flags = next_byte(r).to_int()
+      ChannelMethod::ExchangeDelete(ExchangeDelete::{
+        reserved_1,
+        exchange,
+        if_unused: (flags & 1) != 0,
+        no_wait: (flags & 2) != 0,
+      })
+    }
+    21 => ChannelMethod::ExchangeDeleteOk
+    30 => {
+      let reserved_1 = next_u16(r)
+      let destination = next_shortstr(r)
+      let source = next_shortstr(r)
+      let routing_key = next_shortstr(r)
+      let flags = next_byte(r).to_int()
+      ChannelMethod::ExchangeBind(ExchangeBind::{
+        reserved_1,
+        destination,
+        source,
+        routing_key,
+        no_wait: (flags & 1) != 0,
+        arguments: next_table(r),
+      })
+    }
+    31 => ChannelMethod::ExchangeBindOk
+    40 => {
+      let reserved_1 = next_u16(r)
+      let destination = next_shortstr(r)
+      let source = next_shortstr(r)
+      let routing_key = next_shortstr(r)
+      let flags = next_byte(r).to_int()
+      ChannelMethod::ExchangeUnbind(ExchangeUnbind::{
+        reserved_1,
+        destination,
+        source,
+        routing_key,
+        no_wait: (flags & 1) != 0,
+        arguments: next_table(r),
+      })
+    }
+    51 => ChannelMethod::ExchangeUnbindOk
+    _ => raise ChannelError::UnknownMethod(exchange_class_id, method_id)
+  }
+}
+
+///|
+/// Queue-class (50) method dispatch.
+fn decode_queue_method(
+  r : @codec.Reader,
+  method_id : UInt16,
+) -> ChannelMethod raise ChannelError {
+  match method_id.to_uint().reinterpret_as_int() {
+    10 => {
+      let reserved_1 = next_u16(r)
+      let queue = next_shortstr(r)
+      let flags = next_byte(r).to_int()
+      ChannelMethod::QueueDeclare(QueueDeclare::{
+        reserved_1,
+        queue,
+        passive: (flags & 1) != 0,
+        durable: (flags & 2) != 0,
+        exclusive: (flags & 4) != 0,
+        auto_delete: (flags & 8) != 0,
+        no_wait: (flags & 16) != 0,
+        arguments: next_table(r),
+      })
+    }
+    11 =>
+      ChannelMethod::QueueDeclareOk(QueueDeclareOk::{
+        queue: next_shortstr(r),
+        message_count: next_u32(r),
+        consumer_count: next_u32(r),
+      })
+    20 => {
+      let reserved_1 = next_u16(r)
+      let queue = next_shortstr(r)
+      let exchange = next_shortstr(r)
+      let routing_key = next_shortstr(r)
+      let flags = next_byte(r).to_int()
+      ChannelMethod::QueueBind(QueueBind::{
+        reserved_1,
+        queue,
+        exchange,
+        routing_key,
+        no_wait: (flags & 1) != 0,
+        arguments: next_table(r),
+      })
+    }
+    21 => ChannelMethod::QueueBindOk
+    30 => {
+      let reserved_1 = next_u16(r)
+      let queue = next_shortstr(r)
+      let flags = next_byte(r).to_int()
+      ChannelMethod::QueuePurge(QueuePurge::{
+        reserved_1,
+        queue,
+        no_wait: (flags & 1) != 0,
+      })
+    }
+    31 =>
+      ChannelMethod::QueuePurgeOk(QueuePurgeOk::{ message_count: next_u32(r), })
+    40 => {
+      let reserved_1 = next_u16(r)
+      let queue = next_shortstr(r)
+      let flags = next_byte(r).to_int()
+      ChannelMethod::QueueDelete(QueueDelete::{
+        reserved_1,
+        queue,
+        if_unused: (flags & 1) != 0,
+        if_empty: (flags & 2) != 0,
+        no_wait: (flags & 4) != 0,
+      })
+    }
+    41 =>
+      ChannelMethod::QueueDeleteOk(QueueDeleteOk::{
+        message_count: next_u32(r),
+      })
+    50 =>
+      ChannelMethod::QueueUnbind(QueueUnbind::{
+        reserved_1: next_u16(r),
+        queue: next_shortstr(r),
+        exchange: next_shortstr(r),
+        routing_key: next_shortstr(r),
+        arguments: next_table(r),
+      })
+    51 => ChannelMethod::QueueUnbindOk
+    _ => raise ChannelError::UnknownMethod(queue_class_id, method_id)
+  }
+}
+
+///|
+/// `read_byte` mapped onto `ChannelError`.
+fn next_byte(r : @codec.Reader) -> Byte raise ChannelError {
+  r.read_byte() catch {
+    @codec.CodecError::OutOfRange => raise ChannelError::Truncated
+    @codec.CodecError::InvalidUtf8 => raise ChannelError::InvalidUtf8
+  }
+}
+
+///|
+/// `read_bool` mapped onto `ChannelError`.
+fn next_bool(r : @codec.Reader) -> Bool raise ChannelError {
+  r.read_bool() catch {
+    @codec.CodecError::OutOfRange => raise ChannelError::Truncated
+    @codec.CodecError::InvalidUtf8 => raise ChannelError::InvalidUtf8
+  }
+}
+
+///|
+/// `read_u16` mapped onto `ChannelError`.
+fn next_u16(r : @codec.Reader) -> UInt16 raise ChannelError {
+  r.read_u16() catch {
+    @codec.CodecError::OutOfRange => raise ChannelError::Truncated
+    @codec.CodecError::InvalidUtf8 => raise ChannelError::InvalidUtf8
+  }
+}
+
+///|
+/// `read_u32` mapped onto `ChannelError`.
+fn next_u32(r : @codec.Reader) -> UInt raise ChannelError {
+  r.read_u32() catch {
+    @codec.CodecError::OutOfRange => raise ChannelError::Truncated
+    @codec.CodecError::InvalidUtf8 => raise ChannelError::InvalidUtf8
+  }
+}
+
+///|
+/// `read_shortstr` mapped onto `ChannelError`.
+fn next_shortstr(r : @codec.Reader) -> String raise ChannelError {
+  r.read_shortstr() catch {
+    @codec.CodecError::OutOfRange => raise ChannelError::Truncated
+    @codec.CodecError::InvalidUtf8 => raise ChannelError::InvalidUtf8
+  }
+}
+
+///|
+/// `read_longstr` mapped onto `ChannelError`.
+fn next_longstr(r : @codec.Reader) -> String raise ChannelError {
+  r.read_longstr() catch {
+    @codec.CodecError::OutOfRange => raise ChannelError::Truncated
+    @codec.CodecError::InvalidUtf8 => raise ChannelError::InvalidUtf8
+  }
+}
+
+///|
+/// `FieldTable::decode` mapped onto `ChannelError`.
+fn next_table(r : @codec.Reader) -> @table.FieldTable raise ChannelError {
+  @table.FieldTable::decode(r) catch {
+    @table.TableError::Truncated => raise ChannelError::Truncated
+    @table.TableError::InvalidUtf8 => raise ChannelError::InvalidUtf8
+    @table.TableError::InvalidTag(_) =>
+      raise ChannelError::InvalidTable("unknown field tag in field table")
+    @table.TableError::InvalidKey(m) => raise ChannelError::InvalidTable(m)
+    @table.TableError::ValueOutOfRange(m) => raise ChannelError::InvalidTable(m)
+  }
+}
+
+///|
 /// Write the 2-byte class id and the 2-byte method id.
 fn write_method_header(
   w : @codec.Writer,
