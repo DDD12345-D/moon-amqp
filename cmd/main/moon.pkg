@@ -1,0 +1,5 @@
+// import {
+//   "ddd-1234d/moon-amqp" @lib,
+// }
+
+pkgtype(kind: "executable")
