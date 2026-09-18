@@ -46,6 +46,40 @@ pub fn Frame::encode(self : Frame, w : @codec.Writer) -> Unit {
 }
 
 ///|
+/// Read one complete frame from `r`.
+///
+/// Raises `FrameError::Truncated` when fewer than 8 bytes remain or the
+/// payload is cut off, `FrameError::BadFrameType` for an unknown type
+/// octet, `FrameError::InvalidFrameEnd` when the frame-end octet is not
+/// `0xCE`, and `FrameError::InvalidHeartbeat` when a heartbeat frame
+/// carries a payload or a nonzero channel.
+pub fn Frame::decode(r : @codec.Reader) -> Frame raise FrameError {
+  let type_octet = next_byte(r)
+  let channel = next_u16(r)
+  let size = next_u32(r)
+  if size.to_uint64() > r.remaining().to_uint64() {
+    raise FrameError::Truncated
+  }
+  let payload = next_bytes(r, size.reinterpret_as_int()).to_owned()
+  let frame_end = next_byte(r)
+  if frame_end != b'\xce' {
+    raise FrameError::InvalidFrameEnd(frame_end)
+  }
+  match type_octet {
+    b'\x01' => Frame::Method(channel, payload)
+    b'\x02' => Frame::Header(channel, payload)
+    b'\x03' => Frame::Body(channel, payload)
+    b'\x08' => {
+      if channel.to_uint() != 0 || size != 0 {
+        raise FrameError::InvalidHeartbeat
+      }
+      Frame::Heartbeat
+    }
+    other => raise FrameError::BadFrameType(other)
+  }
+}
+
+///|
 /// Write the 7-byte frame header, the payload, and the frame-end octet.
 fn write_frame(
   w : @codec.Writer,
@@ -58,4 +92,40 @@ fn write_frame(
   w.write_u32(payload.length().reinterpret_as_uint())
   w.write_bytes(payload)
   w.write_byte(b'\xce')
+}
+
+///|
+/// `read_byte` mapped onto `FrameError`.
+fn next_byte(r : @codec.Reader) -> Byte raise FrameError {
+  r.read_byte() catch {
+    @codec.CodecError::OutOfRange => raise FrameError::Truncated
+    @codec.CodecError::InvalidUtf8 => raise FrameError::Truncated
+  }
+}
+
+///|
+/// `read_u16` mapped onto `FrameError`.
+fn next_u16(r : @codec.Reader) -> UInt16 raise FrameError {
+  r.read_u16() catch {
+    @codec.CodecError::OutOfRange => raise FrameError::Truncated
+    @codec.CodecError::InvalidUtf8 => raise FrameError::Truncated
+  }
+}
+
+///|
+/// `read_u32` mapped onto `FrameError`.
+fn next_u32(r : @codec.Reader) -> UInt raise FrameError {
+  r.read_u32() catch {
+    @codec.CodecError::OutOfRange => raise FrameError::Truncated
+    @codec.CodecError::InvalidUtf8 => raise FrameError::Truncated
+  }
+}
+
+///|
+/// `read_bytes` mapped onto `FrameError`.
+fn next_bytes(r : @codec.Reader, n : Int) -> BytesView raise FrameError {
+  r.read_bytes(n) catch {
+    @codec.CodecError::OutOfRange => raise FrameError::Truncated
+    @codec.CodecError::InvalidUtf8 => raise FrameError::Truncated
+  }
 }
