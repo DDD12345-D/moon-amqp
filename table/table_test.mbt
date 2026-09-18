@@ -219,6 +219,19 @@ test "invalid key raises" {
 }
 
 ///|
+/// Dotted field names (e.g. RabbitMQ's capability names) are accepted
+/// and survive an encode/decode roundtrip.
+test "dotted field names are accepted" {
+  let t = FieldTable::new()
+  t.set("basic.nack", FieldValue::Bool(true))
+  let w = @codec.Writer::new()
+  t.encode(w)
+  let r = @codec.Reader::new(w.to_bytes())
+  let back = FieldTable::decode(r)
+  @test.assert_eq(back.get("basic.nack"), Some(FieldValue::Bool(true)))
+}
+
+///|
 /// An unknown tag octet is reported as `InvalidTag` with the octet.
 test "unknown tag raises" {
   let r = @codec.Reader::new(b"\x5a")

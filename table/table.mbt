@@ -159,7 +159,9 @@ fn FieldTable::find_index(self : FieldTable, key : String) -> Int? {
 ///|
 /// Check a field name against the §4.2.5.5 rules: at most 128 characters,
 /// starting with a letter, `$` or `#`, continuing with letters, digits,
-/// `$`, `#` or `_`.
+/// `$`, `#`, `.` or `_`. The dot is not in the formal grammar, but real
+/// brokers use it in capability names (e.g. RabbitMQ's `basic.nack`), so
+/// it is accepted for interoperability.
 fn validate_key(key : String) -> Unit raise TableError {
   let len = key.length()
   if len == 0 || len > 128 {
@@ -169,7 +171,7 @@ fn validate_key(key : String) -> Unit raise TableError {
   for ch in key {
     if !is_key_char(ch, first) {
       raise TableError::InvalidKey(
-        "field name must start with a letter, '$' or '#' and continue with letters, digits, '$', '#' or '_'",
+        "field name must start with a letter, '$' or '#' and continue with letters, digits, '$', '#', '.' or '_'",
       )
     }
     first = false
@@ -185,10 +187,11 @@ fn is_key_char(ch : Char, first : Bool) -> Bool {
   let digit = c >= 48 && c <= 57
   let special = c == 36 || c == 35
   let underscore = c == 95
+  let dot = c == 46
   if first {
     letter || special
   } else {
-    letter || digit || special || underscore
+    letter || digit || special || underscore || dot
   }
 }
 
