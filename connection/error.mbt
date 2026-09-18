@@ -16,6 +16,8 @@
 /// Errors produced while encoding or decoding Connection-class methods
 /// (§4.3 "Class connection") and driving the handshake (§4.2.2).
 pub suberror ConnectionError {
+  /// Input ended before the method's arguments were complete.
+  Truncated
   /// A string in the method was not valid UTF-8.
   InvalidUtf8
   /// A value does not fit its wire type (e.g. a short string over
@@ -23,4 +25,8 @@ pub suberror ConnectionError {
   ValueOutOfRange(String)
   /// A field table inside the method was malformed.
   InvalidTable(String)
+  /// The method's class-id is not 10 (Connection).
+  UnexpectedClass(UInt16)
+  /// The method-id does not belong to the Connection class.
+  UnknownMethod(UInt16)
 }

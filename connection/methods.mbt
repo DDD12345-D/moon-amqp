@@ -158,10 +158,133 @@ pub fn ConnectionMethod::encode(
 }
 
 ///|
+/// Read one Connection-class method from `r`.
+///
+/// Raises `ConnectionError::UnexpectedClass` when the class-id is not
+/// 10, `ConnectionError::UnknownMethod` for a method-id outside the
+/// Connection class, `ConnectionError::Truncated` for input that ends
+/// early, `ConnectionError::InvalidUtf8` for malformed strings, and
+/// `ConnectionError::InvalidTable` for a malformed field table.
+pub fn ConnectionMethod::decode(
+  r : @codec.Reader,
+) -> ConnectionMethod raise ConnectionError {
+  let class_id = next_u16(r)
+  if class_id != connection_class_id {
+    raise ConnectionError::UnexpectedClass(class_id)
+  }
+  let method_id = next_u16(r)
+  match method_id.to_uint().reinterpret_as_int() {
+    10 =>
+      ConnectionMethod::Start(Start::{
+        version_major: next_byte(r),
+        version_minor: next_byte(r),
+        server_properties: next_table(r),
+        mechanisms: next_longstr(r),
+        locales: next_longstr(r),
+      })
+    11 =>
+      ConnectionMethod::StartOk(StartOk::{
+        client_properties: next_table(r),
+        mechanism: next_shortstr(r),
+        response: next_longstr(r),
+        locale: next_shortstr(r),
+      })
+    30 =>
+      ConnectionMethod::Tune(Tune::{
+        channel_max: next_u16(r),
+        frame_max: next_u32(r),
+        heartbeat: next_u16(r),
+      })
+    31 =>
+      ConnectionMethod::TuneOk(TuneOk::{
+        channel_max: next_u16(r),
+        frame_max: next_u32(r),
+        heartbeat: next_u16(r),
+      })
+    40 =>
+      ConnectionMethod::Open(Open::{
+        virtual_host: next_shortstr(r),
+        reserved_1: next_shortstr(r),
+        reserved_2: next_bool(r),
+      })
+    41 => ConnectionMethod::OpenOk(OpenOk::{ reserved_1: next_shortstr(r), })
+    _ => raise ConnectionError::UnknownMethod(method_id)
+  }
+}
+
+///|
 /// Write the 2-byte class id (always 10 here) and the method id.
 fn write_method_header(w : @codec.Writer, method_id : UInt16) -> Unit {
   w.write_u16(connection_class_id)
   w.write_u16(method_id)
+}
+
+///|
+/// `read_byte` mapped onto `ConnectionError`.
+fn next_byte(r : @codec.Reader) -> Byte raise ConnectionError {
+  r.read_byte() catch {
+    @codec.CodecError::OutOfRange => raise ConnectionError::Truncated
+    @codec.CodecError::InvalidUtf8 => raise ConnectionError::InvalidUtf8
+  }
+}
+
+///|
+/// `read_bool` mapped onto `ConnectionError`.
+fn next_bool(r : @codec.Reader) -> Bool raise ConnectionError {
+  r.read_bool() catch {
+    @codec.CodecError::OutOfRange => raise ConnectionError::Truncated
+    @codec.CodecError::InvalidUtf8 => raise ConnectionError::InvalidUtf8
+  }
+}
+
+///|
+/// `read_u16` mapped onto `ConnectionError`.
+fn next_u16(r : @codec.Reader) -> UInt16 raise ConnectionError {
+  r.read_u16() catch {
+    @codec.CodecError::OutOfRange => raise ConnectionError::Truncated
+    @codec.CodecError::InvalidUtf8 => raise ConnectionError::InvalidUtf8
+  }
+}
+
+///|
+/// `read_u32` mapped onto `ConnectionError`.
+fn next_u32(r : @codec.Reader) -> UInt raise ConnectionError {
+  r.read_u32() catch {
+    @codec.CodecError::OutOfRange => raise ConnectionError::Truncated
+    @codec.CodecError::InvalidUtf8 => raise ConnectionError::InvalidUtf8
+  }
+}
+
+///|
+/// `read_shortstr` mapped onto `ConnectionError`.
+fn next_shortstr(r : @codec.Reader) -> String raise ConnectionError {
+  r.read_shortstr() catch {
+    @codec.CodecError::OutOfRange => raise ConnectionError::Truncated
+    @codec.CodecError::InvalidUtf8 => raise ConnectionError::InvalidUtf8
+  }
+}
+
+///|
+/// `read_longstr` mapped onto `ConnectionError`.
+fn next_longstr(r : @codec.Reader) -> String raise ConnectionError {
+  r.read_longstr() catch {
+    @codec.CodecError::OutOfRange => raise ConnectionError::Truncated
+    @codec.CodecError::InvalidUtf8 => raise ConnectionError::InvalidUtf8
+  }
+}
+
+///|
+/// `FieldTable::decode` mapped onto `ConnectionError`.
+fn next_table(r : @codec.Reader) -> @table.FieldTable raise ConnectionError {
+  @table.FieldTable::decode(r) catch {
+    @table.TableError::Truncated => raise ConnectionError::Truncated
+    @table.TableError::InvalidUtf8 => raise ConnectionError::InvalidUtf8
+    @table.TableError::InvalidTag(_) =>
+      raise ConnectionError::InvalidTable("unknown field tag in field table")
+    @table.TableError::InvalidKey(m) => raise ConnectionError::InvalidTable(m)
+    @table.TableError::ValueOutOfRange(m) =>
+      raise ConnectionError::InvalidTable(m)
+  }
 }
 
 ///|
