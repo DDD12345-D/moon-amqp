@@ -83,3 +83,11 @@ jobs:
         run: moon build --target js e2e
       - name: Run the e2e driver
         run: node _build/js/debug/build/e2e/e2e.js
+      - name: Build the examples
+        run: moon build --target js examples/work_queues examples/pubsub examples/rpc
+      - name: Run the work_queues example
+        run: node _build/js/debug/build/examples/work_queues/work_queues.js
+      - name: Run the pubsub example
+        run: node _build/js/debug/build/examples/pubsub/pubsub.js
+      - name: Run the rpc example
+        run: node _build/js/debug/build/examples/rpc/rpc.js

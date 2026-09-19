@@ -13,13 +13,13 @@
 // limitations under the License.
 
 ///|
-/// Non-JS transport stubs: the e2e driver only runs on the JS
+/// Non-JS transport stubs: the driver package only runs on the JS
 /// backend, where bridge_js.mbt provides the socket transport.
-/// These stubs keep every other build target compiling; running the
+/// These stubs keep every other build target compiling; running a
 /// driver on a non-JS target panics.
 
 ///|
-/// Terminate the process: the e2e driver has no transport outside
+/// Terminate the process: the driver has no transport outside
 /// the JS backend.
 fn[T] panic_impl() -> T = "%panic"
 

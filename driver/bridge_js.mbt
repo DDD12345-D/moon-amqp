@@ -13,7 +13,7 @@
 // limitations under the License.
 
 ///|
-/// JS-target transport for the e2e driver.
+/// JS-target transport for the driver package.
 ///
 /// A worker thread owns the TCP socket so node's event loop keeps
 /// running while the driver's main thread waits synchronously; bytes
