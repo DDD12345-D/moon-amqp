@@ -2,7 +2,7 @@ import {
   "moonbitlang/core/builtin",
   "moonbitlang/core/debug",
   "moonbitlang/core/encoding/utf8",
-  "ddd-1234d/moon-amqp/codec",
+  "DDD12345-D/moon-amqp/codec",
 }
 
 import {

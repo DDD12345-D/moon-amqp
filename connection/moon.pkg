@@ -1,8 +1,8 @@
 import {
   "moonbitlang/core/builtin",
   "moonbitlang/core/debug",
-  "ddd-1234d/moon-amqp/codec",
-  "ddd-1234d/moon-amqp/table",
+  "DDD12345-D/moon-amqp/codec",
+  "DDD12345-D/moon-amqp/table",
 }
 
 import {

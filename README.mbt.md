@@ -12,10 +12,10 @@ The library is under active development for the September 2026 MoonBit hackathon
 ## Installation
 
 ```sh
-moon add ddd-1234d/moon-amqp
+moon add DDD12345-D/moon-amqp
 ```
 
-The packages, each importable under the module name `ddd-1234d/moon-amqp`:
+The packages, each importable under the module name `DDD12345-D/moon-amqp`:
 
 | Package | Contents |
 | --- | --- |

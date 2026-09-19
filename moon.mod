@@ -9,13 +9,13 @@
 //   "moonbitlang/x@0.4.6",
 // }
 
-name = "ddd-1234d/moon-amqp"
+name = "DDD12345-D/moon-amqp"
 
 version = "0.1.0"
 
 readme = "README.mbt.md"
 
-repository = "https://github.com/ddd-1234d/moon-amqp"
+repository = "https://github.com/DDD12345-D/moon-amqp"
 
 license = "Apache-2.0"
 

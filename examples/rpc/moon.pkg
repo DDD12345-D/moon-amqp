@@ -3,10 +3,10 @@ pkgtype(kind: "executable")
 import {
   "moonbitlang/core/builtin",
   "moonbitlang/core/encoding/utf8",
-  "ddd-1234d/moon-amqp/codec",
-  "ddd-1234d/moon-amqp/frame",
-  "ddd-1234d/moon-amqp/table",
-  "ddd-1234d/moon-amqp/channel",
-  "ddd-1234d/moon-amqp/basic",
-  "ddd-1234d/moon-amqp/driver",
+  "DDD12345-D/moon-amqp/codec",
+  "DDD12345-D/moon-amqp/frame",
+  "DDD12345-D/moon-amqp/table",
+  "DDD12345-D/moon-amqp/channel",
+  "DDD12345-D/moon-amqp/basic",
+  "DDD12345-D/moon-amqp/driver",
 }
