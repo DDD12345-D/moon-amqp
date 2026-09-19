@@ -44,6 +44,12 @@ node _build/js/debug/build/examples/rpc/rpc.js
 
 `examples/work_queues` and `examples/pubsub` run the same way (replace the package and file names in the two commands above). The broker address and credentials come from the `RABBITMQ_HOST`, `RABBITMQ_USER`, and `RABBITMQ_PASSWORD` environment variables (defaults: `127.0.0.1:5672`, `guest`/`guest`). RabbitMQ only accepts `guest` from localhost, so point the variables at your own user for a remote broker.
 
+## Demo
+
+A recorded terminal session against a real RabbitMQ broker: one build, then the four demo programs (end-to-end check, work queues, publish/subscribe, RPC) running in turn — the actual output of the commands above.
+
+![Animated terminal recording: moon-amqp building and running the e2e, work_queues, pubsub, and rpc programs against a real RabbitMQ 4.3.6 broker](https://raw.githubusercontent.com/DDD12345-D/moon-amqp/master/.assets/demo.gif)
+
 ## API
 
 The protocol packages expose one typed struct per AMQP method, each with field names and layout following the spec's §4.2 tables, `derive(Eq, Debug)`, encoding into a `codec.Writer`, and decoding from a `codec.Reader`. Each package also defines a `suberror` type (`FrameError`, `ConnectionError`, `ChannelError`, `BasicError`, and friends) for its failure modes; `moon check --deny-warn` keeps error handling exhaustive.
