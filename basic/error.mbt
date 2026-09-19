@@ -23,6 +23,8 @@ pub suberror BasicError {
   /// A value does not fit its wire type or violates a fixed
   /// constant the protocol demands.
   ValueOutOfRange(String)
+  /// A field table is malformed or carries an invalid key.
+  InvalidTable(String)
   /// The payload's class id is not the basic class (60).
   UnexpectedClass(UInt16)
   /// The method id is not defined for the basic class.
