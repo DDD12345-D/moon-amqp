@@ -1,0 +1,9 @@
+import {
+  "moonbitlang/core/builtin",
+  "moonbitlang/core/debug",
+  "ddd-1234d/moon-amqp/codec",
+}
+
+import {
+  "moonbitlang/core/test",
+} for "test"
