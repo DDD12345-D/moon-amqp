@@ -81,8 +81,25 @@ pub(all) struct OpenOk {
 } derive(Eq, @debug.Debug)
 
 ///|
+/// Connection.Close (method 50): one peer tells the other the
+/// connection is ending (§4.3.12). `class_id`/`method_id` name the
+/// method whose failure provoked the close, and are 0 for a
+/// connection-level close (the normal shutdown case).
+pub(all) struct Close {
+  /// The reply code (§4.3.12.4), e.g. 200 for a normal shutdown.
+  reply_code : UInt16
+  /// Human-readable explanation, e.g. `"Goodbye"`.
+  reply_text : String
+  /// Failing method class, or 0 for a connection-level close.
+  class_id : UInt16
+  /// Failing method id, or 0 for a connection-level close.
+  method_id : UInt16
+} derive(Eq, @debug.Debug)
+
+///|
 /// One of the Connection-class methods used during the handshake
 /// (§4.3). The payload wire form is: class id, method id, arguments.
+/// `CloseOk` carries no fields (§4.3.13), so its payload is `Unit`.
 pub(all) enum ConnectionMethod {
   Start(Start)
   StartOk(StartOk)
@@ -90,6 +107,8 @@ pub(all) enum ConnectionMethod {
   TuneOk(TuneOk)
   Open(Open)
   OpenOk(OpenOk)
+  Close(Close)
+  CloseOk(Unit)
 } derive(Eq, @debug.Debug)
 
 ///|
@@ -154,6 +173,14 @@ pub fn ConnectionMethod::encode(
       }
       write_shortstr_checked(w, o.reserved_1)
     }
+    ConnectionMethod::Close(c) => {
+      write_method_header(w, (50).to_uint16())
+      w.write_u16(c.reply_code)
+      write_shortstr_checked(w, c.reply_text)
+      w.write_u16(c.class_id)
+      w.write_u16(c.method_id)
+    }
+    ConnectionMethod::CloseOk(_) => write_method_header(w, (51).to_uint16())
   }
 }
 
@@ -208,6 +235,14 @@ pub fn ConnectionMethod::decode(
         reserved_2: next_bool(r),
       })
     41 => ConnectionMethod::OpenOk(OpenOk::{ reserved_1: next_shortstr(r), })
+    50 =>
+      ConnectionMethod::Close(Close::{
+        reply_code: next_u16(r),
+        reply_text: next_shortstr(r),
+        class_id: next_u16(r),
+        method_id: next_u16(r),
+      })
+    51 => ConnectionMethod::CloseOk(())
     _ => raise ConnectionError::UnknownMethod(method_id)
   }
 }

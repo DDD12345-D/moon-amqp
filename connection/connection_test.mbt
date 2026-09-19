@@ -81,6 +81,18 @@ test "connection method golden encode" {
     enc(ConnectionMethod::OpenOk(OpenOk::{ reserved_1: "", })),
     b"\x00\x0a\x00\x29\x00",
   )
+  @test.assert_eq(
+    enc(
+      ConnectionMethod::Close(Close::{
+        reply_code: (200).to_uint16(),
+        reply_text: "Goodbye",
+        class_id: (0).to_uint16(),
+        method_id: (0).to_uint16(),
+      }),
+    ),
+    b"\x00\x0a\x00\x32\x00\xc8\x07Goodbye\x00\x00\x00\x00",
+  )
+  @test.assert_eq(enc(ConnectionMethod::CloseOk(())), b"\x00\x0a\x00\x33")
 }
 
 ///|
@@ -158,7 +170,7 @@ test "oversized short strings raise" {
 /// one after another from a single reader.
 test "connection method golden decode" {
   let r = @codec.Reader::new(
-    b"\x00\x0a\x00\x0a\x00\x09\x00\x00\x00\x00\x00\x00\x00\x05PLAIN\x00\x00\x00\x05en_US\x00\x0a\x00\x0b\x00\x00\x00\x00\x05PLAIN\x00\x00\x00\x05guest\x05en_US\x00\x0a\x00\x1e\x07\xff\x00\x02\x00\x00\x00\x3c\x00\x0a\x00\x1f\x07\xff\x00\x02\x00\x00\x00\x3c\x00\x0a\x00\x28\x01/\x00\x00\x00\x0a\x00\x29\x00",
+    b"\x00\x0a\x00\x0a\x00\x09\x00\x00\x00\x00\x00\x00\x00\x05PLAIN\x00\x00\x00\x05en_US\x00\x0a\x00\x0b\x00\x00\x00\x00\x05PLAIN\x00\x00\x00\x05guest\x05en_US\x00\x0a\x00\x1e\x07\xff\x00\x02\x00\x00\x00\x3c\x00\x0a\x00\x1f\x07\xff\x00\x02\x00\x00\x00\x3c\x00\x0a\x00\x28\x01/\x00\x00\x00\x0a\x00\x29\x00\x00\x0a\x00\x32\x00\xc8\x07Goodbye\x00\x00\x00\x00\x00\x0a\x00\x33",
   )
   @test.assert_eq(
     ConnectionMethod::decode(r),
@@ -207,6 +219,16 @@ test "connection method golden decode" {
     ConnectionMethod::decode(r),
     ConnectionMethod::OpenOk(OpenOk::{ reserved_1: "", }),
   )
+  @test.assert_eq(
+    ConnectionMethod::decode(r),
+    ConnectionMethod::Close(Close::{
+      reply_code: (200).to_uint16(),
+      reply_text: "Goodbye",
+      class_id: (0).to_uint16(),
+      method_id: (0).to_uint16(),
+    }),
+  )
+  @test.assert_eq(ConnectionMethod::decode(r), ConnectionMethod::CloseOk(()))
   @test.assert_eq(r.is_empty(), true)
 }
 
@@ -249,6 +271,13 @@ test "connection method roundtrip" {
       reserved_2: false,
     }),
     ConnectionMethod::OpenOk(OpenOk::{ reserved_1: "", }),
+    ConnectionMethod::Close(Close::{
+      reply_code: (320).to_uint16(),
+      reply_text: "CONNECTION_FORCED - shutdown",
+      class_id: (0).to_uint16(),
+      method_id: (0).to_uint16(),
+    }),
+    ConnectionMethod::CloseOk(()),
   ]
   let w = @codec.Writer::new()
   for m in methods {
@@ -285,6 +314,7 @@ test "malformed methods raise" {
   for
     bad in [
       b"", b"\x00\x0a\x00", b"\x00\x0a\x00\x0a\x00", b"\x00\x0a\x00\x0a\x00\x09\x00\x00\x00\x10\x04bool",
+      b"\x00\x0a\x00\x32\x00\xc8\x07Good",
     ] {
     let raised = try {
       let _ = ConnectionMethod::decode(@codec.Reader::new(bad))
@@ -295,6 +325,16 @@ test "malformed methods raise" {
     }
     @test.assert_eq(raised, true)
   }
+  let raised = try {
+    let _ = ConnectionMethod::decode(
+      @codec.Reader::new(b"\x00\x0a\x00\x32\x00\xc8\x01\xff"),
+    )
+    false
+  } catch {
+    ConnectionError::InvalidUtf8 => true
+    _ => false
+  }
+  @test.assert_eq(raised, true)
   let err = try {
     let _ = ConnectionMethod::decode(
       @codec.Reader::new(
