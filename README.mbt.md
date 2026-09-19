@@ -27,7 +27,7 @@ The packages, each importable under the module name `DDD12345-D/moon-amqp`:
 | `basic` | Basic-class methods, `ContentHeader`, `BasicProperties` |
 | `driver` | Session driver, including the socket transport (JS backend) |
 
-Until the first release is on mooncakes.io, clone this repository and run the examples straight from the clone; see the next section.
+The examples in this repository run straight from the clone; see the next section.
 
 ## Quick start
 
