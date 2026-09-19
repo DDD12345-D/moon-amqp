@@ -175,3 +175,198 @@ test "builders require their phase" {
   }
   @test.assert_eq(raised, true)
 }
+
+///|
+/// Drive a handshake through the happy path to `Open`.
+fn open_handshake() -> Handshake raise ConnectionError {
+  let h = Handshake::new()
+  h.receive(
+    ConnectionMethod::Start(Start::{
+      version_major: b'\x00',
+      version_minor: b'\x09',
+      server_properties: @table.FieldTable::new(),
+      mechanisms: "PLAIN",
+      locales: "en_US",
+    }),
+  )
+  h.receive(
+    ConnectionMethod::Tune(Tune::{
+      channel_max: (2047).to_uint16(),
+      frame_max: 131072,
+      heartbeat: (60).to_uint16(),
+    }),
+  )
+  h.receive(ConnectionMethod::OpenOk(OpenOk::{ reserved_1: "", }))
+  h
+}
+
+///|
+/// A Connection.Close from the server during the handshake (e.g. a
+/// refused login) ends the connection from any phase, records the
+/// reason, and is answered with Close-Ok.
+test "server close during handshake ends the connection" {
+  let h = Handshake::new()
+  h.receive(
+    ConnectionMethod::Start(Start::{
+      version_major: b'\x00',
+      version_minor: b'\x09',
+      server_properties: @table.FieldTable::new(),
+      mechanisms: "PLAIN",
+      locales: "en_US",
+    }),
+  )
+  h.receive(
+    ConnectionMethod::Close(Close::{
+      reply_code: (403).to_uint16(),
+      reply_text: "ACCESS_REFUSED - Login was refused",
+      class_id: (0).to_uint16(),
+      method_id: (0).to_uint16(),
+    }),
+  )
+  @test.assert_eq(h.state(), HandshakeState::Closed)
+  match h.close_reason() {
+    Some(c) => {
+      @test.assert_eq(c.reply_code, (403).to_uint16())
+      @test.assert_eq(c.reply_text, "ACCESS_REFUSED - Login was refused")
+    }
+    None => @test.assert_eq(0, 1)
+  }
+  @test.assert_eq(h.close_ok(), ConnectionMethod::CloseOk(()))
+}
+
+///|
+/// A Connection.Close from the server on an open connection (e.g. an
+/// administrative shutdown) ends the connection and is answered with
+/// Close-Ok.
+test "server close on an open connection" {
+  let h = open_handshake()
+  h.receive(
+    ConnectionMethod::Close(Close::{
+      reply_code: (320).to_uint16(),
+      reply_text: "CONNECTION_FORCED - shutdown",
+      class_id: (0).to_uint16(),
+      method_id: (0).to_uint16(),
+    }),
+  )
+  @test.assert_eq(h.state(), HandshakeState::Closed)
+  @test.assert_eq(h.close_ok(), ConnectionMethod::CloseOk(()))
+}
+
+///|
+/// The normal shutdown: the client sends Close (class and method ids
+/// 0), the server answers Close-Ok, and the connection is closed.
+test "client close then server close-ok" {
+  let h = open_handshake()
+  let close = h.close((200).to_uint16(), "Goodbye")
+  @test.assert_eq(
+    close,
+    ConnectionMethod::Close(Close::{
+      reply_code: (200).to_uint16(),
+      reply_text: "Goodbye",
+      class_id: (0).to_uint16(),
+      method_id: (0).to_uint16(),
+    }),
+  )
+  @test.assert_eq(h.state(), HandshakeState::Open)
+  h.receive(ConnectionMethod::CloseOk(()))
+  @test.assert_eq(h.state(), HandshakeState::Closed)
+  @test.assert_eq(h.close_reason(), None)
+}
+
+///|
+/// Close-Ok without a preceding Close from the client is a protocol
+/// violation and leaves the connection open.
+test "close-ok without a close raises" {
+  let h = open_handshake()
+  let raised = try {
+    h.receive(ConnectionMethod::CloseOk(()))
+    false
+  } catch {
+    ConnectionError::UnexpectedMethod(_) => true
+    _ => false
+  }
+  @test.assert_eq(raised, true)
+  @test.assert_eq(h.state(), HandshakeState::Open)
+}
+
+///|
+/// The terminal Closed phase leaks nothing: every method, every
+/// builder, is rejected, in both directions of the close.
+test "closed connection rejects everything" {
+  let h = open_handshake()
+  let _ = h.close((200).to_uint16(), "Goodbye")
+  h.receive(ConnectionMethod::CloseOk(()))
+
+  for
+    m in [
+      ConnectionMethod::Start(Start::{
+        version_major: b'\x00',
+        version_minor: b'\x09',
+        server_properties: @table.FieldTable::new(),
+        mechanisms: "PLAIN",
+        locales: "en_US",
+      }),
+      ConnectionMethod::Tune(Tune::{
+        channel_max: (2047).to_uint16(),
+        frame_max: 131072,
+        heartbeat: (60).to_uint16(),
+      }),
+      ConnectionMethod::OpenOk(OpenOk::{ reserved_1: "", }),
+      ConnectionMethod::Close(Close::{
+        reply_code: (320).to_uint16(),
+        reply_text: "CONNECTION_FORCED",
+        class_id: (0).to_uint16(),
+        method_id: (0).to_uint16(),
+      }),
+      ConnectionMethod::CloseOk(()),
+    ] {
+    let raised = try {
+      h.receive(m)
+      false
+    } catch {
+      ConnectionError::UnexpectedMethod(_) => true
+      _ => false
+    }
+    @test.assert_eq(raised, true)
+  }
+  let raised = try {
+    let _ = h.start_ok(@table.FieldTable::new(), "PLAIN", "", "en_US")
+    false
+  } catch {
+    ConnectionError::UnexpectedMethod(_) => true
+    _ => false
+  }
+  @test.assert_eq(raised, true)
+  let raised = try {
+    let _ = h.tune_ok((2047).to_uint16(), 131072, (60).to_uint16())
+    false
+  } catch {
+    ConnectionError::UnexpectedMethod(_) => true
+    _ => false
+  }
+  @test.assert_eq(raised, true)
+  let raised = try {
+    let _ = h.open("/")
+    false
+  } catch {
+    ConnectionError::UnexpectedMethod(_) => true
+    _ => false
+  }
+  @test.assert_eq(raised, true)
+  let raised = try {
+    let _ = h.close((200).to_uint16(), "Goodbye")
+    false
+  } catch {
+    ConnectionError::UnexpectedMethod(_) => true
+    _ => false
+  }
+  @test.assert_eq(raised, true)
+  let raised = try {
+    let _ = h.close_ok()
+    false
+  } catch {
+    ConnectionError::UnexpectedMethod(_) => true
+    _ => false
+  }
+  @test.assert_eq(raised, true)
+}
