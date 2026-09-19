@@ -85,6 +85,15 @@ node _build/js/debug/build/examples/rpc/rpc.js
 
 CI runs exactly these commands against a RabbitMQ service container — see `.github/workflows/ci.yml`.
 
+## References
+
+moon-amqp is a fresh implementation of the [AMQP 0-9-1 specification](https://www.rabbitmq.com/resources/specs/amqp0-9-1.pdf), the reference text for every wire format here. The design and the recorded-fixture tests were informed by two mature clients:
+
+- [amqplib](https://github.com/amqp-node/amqplib) (MIT license) — its byte-level output for the same protocol exchanges is the cross-check in the recorded connection/channel/basic tests;
+- [amqp091-go](https://github.com/rabbitmq/amqp091-go) (BSD-2-Clause license) — consulted for session-structure and error-handling design decisions.
+
+No code is copied from either project: all source is written in MoonBit against the specification. The server-side fixtures are recordings of protocol traffic from a locally run RabbitMQ broker.
+
 ## Limitations
 
 - The socket transport only exists on the JavaScript backend (`driver`). The `wasm` and native targets build the protocol packages, but cannot open sessions yet.
