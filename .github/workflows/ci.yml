@@ -1,0 +1,85 @@
+name: ci
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up MoonBit
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash -s 0.1.20260915
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+      - name: moon check
+        run: moon check --deny-warn
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up MoonBit
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash -s 0.1.20260915
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+      - name: Build for JS
+        run: moon build --target js
+      - name: Build for WASM (default target)
+        run: moon build
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up MoonBit
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash -s 0.1.20260915
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+      - name: moon test
+        run: moon test
+
+  fmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up MoonBit
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash -s 0.1.20260915
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+      - name: moon fmt --check
+        run: moon fmt --check
+
+  e2e:
+    runs-on: ubuntu-latest
+    services:
+      rabbitmq:
+        image: rabbitmq:4
+        env:
+          RABBITMQ_DEFAULT_USER: ci
+          RABBITMQ_DEFAULT_PASS: ci
+        ports:
+          - 5672:5672
+        options: >-
+          --health-cmd "rabbitmq-diagnostics -q ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      RABBITMQ_USER: ci
+      RABBITMQ_PASSWORD: ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Set up MoonBit
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash -s 0.1.20260915
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+      - name: Build the e2e driver
+        run: moon build --target js e2e
+      - name: Run the e2e driver
+        run: node _build/js/debug/build/e2e/e2e.js

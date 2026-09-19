@@ -1,0 +1,17 @@
+pkgtype(kind: "executable")
+
+import {
+  "moonbitlang/core/builtin",
+  "moonbitlang/core/env",
+  "moonbitlang/core/encoding/utf8",
+  "ddd-1234d/moon-amqp/codec",
+  "ddd-1234d/moon-amqp/frame",
+  "ddd-1234d/moon-amqp/table",
+  "ddd-1234d/moon-amqp/connection",
+  "ddd-1234d/moon-amqp/channel",
+  "ddd-1234d/moon-amqp/basic",
+}
+
+options(
+  targets: { "bridge_js.mbt": [ "js" ], "bridge_nonjs.mbt": [ "not", "js" ] },
+)
