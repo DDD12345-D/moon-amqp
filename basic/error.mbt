@@ -14,7 +14,8 @@
 
 ///|
 /// Errors raised by the basic package: method and content header
-/// encoding and decoding failures.
+/// encoding and decoding failures, and dispatch settlement
+/// violations.
 pub suberror BasicError {
   /// The input ended before a value was complete.
   Truncated
@@ -29,4 +30,15 @@ pub suberror BasicError {
   UnexpectedClass(UInt16)
   /// The method id is not defined for the basic class.
   UnknownMethod(UInt16, UInt16)
+  /// A consumer tag is not registered on the dispatch.
+  UnknownConsumer(String)
+  /// The consumer tag is already registered on the dispatch.
+  ConsumerExists(String)
+  /// The delivery tag is unknown or already settled.
+  UnknownDelivery(UInt64)
+  /// The same delivery tag was delivered again while still
+  /// outstanding.
+  DuplicateDelivery(UInt64)
+  /// A delivery arrived beyond the prefetch window.
+  PrefetchExceeded
 }
