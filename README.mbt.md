@@ -9,6 +9,8 @@ Pure MoonBit implementation of the [AMQP 0-9-1](https://www.rabbitmq.com/resourc
 
 The library is under active development for the September 2026 MoonBit hackathon; see [Limitations](#limitations) for what is not there yet.
 
+🌐 Website: [https://ddd12345-d.github.io/moon-amqp/](https://ddd12345-d.github.io/moon-amqp/)
+
 ## Installation
 
 ```sh
