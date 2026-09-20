@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="moon-amqp:纯 MoonBit 实现的 AMQP 0-9-1 协议客户端,连接 RabbitMQ。线级编解码、真实 broker 字节级验证、142 个测试、CI 端到端全绿。2026 年 9 月 MoonBit 黑客松参赛项目。" />
+<meta property="og:title" content="moon-amqp · 纯 MoonBit 的 AMQP 0-9-1 客户端" />
+<meta property="og:description" content="让 MoonBit 应用直连 RabbitMQ,协议路径上零非 MoonBit 代码。" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<title>moon-amqp · 纯 MoonBit 的 AMQP 0-9-1 客户端</title>
+<style>
+  :root {
+    --bg: #0d1117; --panel: #161b22; --border: #30363d;
+    --text: #e6edf3; --dim: #8b949e; --green: #3fb950;
+    --blue: #58a6ff; --purple: #bc8cff; --yellow: #d29922;
+    --mono: ui-monospace, "Cascadia Mono", Consolas, "Courier New", monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg); color: var(--text);
+    font: 16px/1.6 -apple-system, "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+  }
+  a { color: var(--blue); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+
+  /* nav */
+  header {
+    position: sticky; top: 0; z-index: 10;
+    background: rgba(13,17,23,.92); backdrop-filter: blur(6px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav { display: flex; align-items: center; gap: 24px; height: 56px; }
+  .nav .logo { font-family: var(--mono); font-weight: 700; color: var(--text); font-size: 18px; }
+  .nav .logo:hover { text-decoration: none; }
+  .nav .logo b { color: var(--green); }
+  .nav .links { margin-left: auto; display: flex; gap: 18px; font-size: 14px; }
+  .nav .links a { color: var(--dim); }
+  .nav .links a:hover { color: var(--text); text-decoration: none; }
+
+  /* hero */
+  .hero { padding: 72px 0 48px; text-align: center; }
+  .hero h1 {
+    font-family: var(--mono); font-size: 56px; font-weight: 700; letter-spacing: -1px;
+  }
+  .hero h1 .dot { color: var(--green); }
+  .hero .tag { margin-top: 14px; font-size: 20px; color: var(--dim); }
+  .hero .tag b { color: var(--text); font-weight: 600; }
+  .chips { margin-top: 22px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+  .chip {
+    font-family: var(--mono); font-size: 13px; color: var(--text);
+    border: 1px solid var(--border); border-radius: 999px; padding: 4px 14px;
+    background: var(--panel);
+  }
+  .chip .g { color: var(--green); }
+  .install { margin-top: 28px; }
+  .install .box {
+    display: inline-flex; align-items: center; gap: 12px;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+    padding: 12px 12px 12px 20px; font-family: var(--mono); font-size: 16px;
+  }
+  .install .prompt { color: var(--green); }
+  .install button {
+    font: 13px var(--mono); color: var(--dim); background: transparent;
+    border: 1px solid var(--border); border-radius: 6px; padding: 5px 12px; cursor: pointer;
+  }
+  .install button:hover { color: var(--text); border-color: var(--dim); }
+  .ctas { margin-top: 26px; display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; }
+  .btn {
+    display: inline-block; padding: 10px 24px; border-radius: 8px; font-size: 15px;
+    border: 1px solid var(--border);
+  }
+  .btn.primary { background: var(--green); border-color: var(--green); color: #052c12; font-weight: 600; }
+  .btn.primary:hover { background: #4cc85c; text-decoration: none; }
+  .btn.ghost:hover { border-color: var(--dim); text-decoration: none; }
+
+  /* stats */
+  .stats { display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; margin-top: 44px; }
+  .stat { text-align: center; }
+  .stat .n { font-family: var(--mono); font-size: 30px; font-weight: 700; color: var(--green); }
+  .stat .l { font-size: 13px; color: var(--dim); margin-top: 2px; }
+
+  /* sections */
+  section { padding: 56px 0; border-top: 1px solid var(--border); }
+  section h2 { font-size: 26px; margin-bottom: 6px; }
+  section h2 .hash { color: var(--green); font-family: var(--mono); }
+  section .lead { color: var(--dim); margin-bottom: 28px; max-width: 640px; }
+
+  /* demo */
+  .demo .frame {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    overflow: hidden;
+  }
+  .demo .titlebar {
+    display: flex; align-items: center; gap: 8px; padding: 10px 14px;
+    border-bottom: 1px solid var(--border); background: #10151d;
+  }
+  .demo .titlebar i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+  .demo .titlebar .t { margin-left: 8px; font: 13px var(--mono); color: var(--dim); }
+  .demo img { display: block; width: 100%; height: auto; }
+  .demo .cap { margin-top: 10px; font-size: 14px; color: var(--dim); text-align: center; }
+
+  /* features */
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 20px 22px;
+  }
+  .card h3 { font-size: 16px; margin-bottom: 8px; }
+  .card h3 .ico { color: var(--green); font-family: var(--mono); margin-right: 8px; }
+  .card p { font-size: 14px; color: var(--dim); }
+
+  /* code */
+  pre {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 18px 22px; overflow-x: auto; font: 14px/1.7 var(--mono); color: var(--text);
+  }
+  pre .p { color: var(--green); }      /* prompt / comment */
+  pre .c { color: var(--dim); }        /* comment */
+  pre .o { color: var(--blue); }       /* output */
+  .step { margin-bottom: 18px; }
+  .step .n { font-family: var(--mono); color: var(--purple); font-size: 13px; }
+  .step p { color: var(--dim); font-size: 14px; margin: 4px 0 8px; }
+
+  /* examples cards */
+  .ex { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+  .ex .card h3 { font-family: var(--mono); }
+  .ex .card .tag { color: var(--yellow); font-size: 12px; font-family: var(--mono); }
+
+  /* table */
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+  th { color: var(--dim); font-weight: 500; font-size: 13px; }
+  td code { font-family: var(--mono); color: var(--blue); }
+
+  footer { border-top: 1px solid var(--border); padding: 36px 0 48px; font-size: 14px; color: var(--dim); }
+  footer .row { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 10px; }
+
+  @media (max-width: 640px) {
+    .hero h1 { font-size: 38px; }
+    .nav .links { gap: 12px; }
+    .stats { gap: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a class="logo" href="#top">moon<b>-amqp</b></a>
+    <div class="links">
+      <a href="https://github.com/DDD12345-D/moon-amqp">GitHub</a>
+      <a href="https://mooncakes.io/packages/DDD12345-D/moon-amqp">mooncakes</a>
+      <a href="https://github.com/DDD12345-D/moon-amqp/blob/master/README.mbt.md">README</a>
+      <a href="https://github.com/DDD12345-D/moon-amqp/issues">Issues</a>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+  <div class="wrap hero">
+    <h1>moon-amqp<span class="dot">.</span></h1>
+    <p class="tag">纯 MoonBit 实现的 <b>AMQP 0-9-1</b> 协议客户端 —— 让 MoonBit 应用直连 <b>RabbitMQ</b>,协议路径上零非 MoonBit 代码</p>
+    <div class="chips">
+      <span class="chip">v<span class="g">0.1.0</span> · mooncakes 已发布</span>
+      <span class="chip">Apache-<span class="g">2.0</span></span>
+      <span class="chip">CI <span class="g">5 job 全绿</span></span>
+      <span class="chip"><span class="g">142</span> 个测试</span>
+      <span class="chip"><span class="g">33</span> 次真实提交</span>
+    </div>
+    <div class="install">
+      <div class="box">
+        <span class="prompt">$ </span><span>moon add DDD12345-D/moon-amqp</span>
+        <button id="copy" title="复制命令">复制</button>
+      </div>
+    </div>
+    <div class="ctas">
+      <a class="btn primary" href="#quickstart">快速开始</a>
+      <a class="btn ghost" href="#demo">观看演示</a>
+      <a class="btn ghost" href="https://github.com/DDD12345-D/moon-amqp">GitHub 仓库</a>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="n">33</div><div class="l">commits</div></div>
+      <div class="stat"><div class="n">142</div><div class="l">tests</div></div>
+      <div class="stat"><div class="n">5</div><div class="l">CI jobs</div></div>
+      <div class="stat"><div class="n">3</div><div class="l">示例程序</div></div>
+      <div class="stat"><div class="n">0.1.0</div><div class="l">mooncakes</div></div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <section class="demo" id="demo">
+      <h2><span class="hash">#</span> 现场演示</h2>
+      <p class="lead">实录:一次构建,四个程序依次对真实 RabbitMQ 4.3.6 跑完全流程 —— 端到端会话、工作队列、发布订阅、RPC。</p>
+      <div class="frame">
+        <div class="titlebar"><i style="background:#ff5f56"></i><i style="background:#ffbd2e"></i><i style="background:#27c93f"></i><span class="t">moon-amqp - cmd</span></div>
+        <img src="https://raw.githubusercontent.com/DDD12345-D/moon-amqp/master/.assets/demo.gif" alt="moon-amqp 对真实 RabbitMQ broker 的终端实录动画" loading="lazy" />
+      </div>
+      <p class="cap">上图 = README 中命令的真实输出,无剪接</p>
+    </section>
+
+    <section id="features">
+      <h2><span class="hash">#</span> 特性</h2>
+      <p class="lead">按 AMQP 0-9-1 官方规范手写实现,每一层都以真实 broker 的字节流做交叉验证。</p>
+      <div class="grid">
+        <div class="card"><h3><span class="ico">01</span>线级编解码</h3><p>帧、方法、content header、字段表的手写编解码器(codec / frame / table 包),大端序与位域按 §4.2.5 逐位实现。</p></div>
+        <div class="card"><h3><span class="ico">02</span>协议状态机</h3><p>连接握手 Start/Tune/Open 状态机、Closed 终态、心跳簿记(§4.2.7),非法序列有明确报错且状态不变。</p></div>
+        <div class="card"><h3><span class="ico">03</span>消息全流程</h3><p>拓扑声明、发布(14 个消息属性)、消费与确认:ack / nack / reject 状态机、prefetch 窗口门控、RPC 关联。</p></div>
+        <div class="card"><h3><span class="ico">04</span>真实 broker 验证</h3><p>与 amqplib 对同一协议交换的录制帧<b>逐字节一致</b>的 fixture 测试(握手、拓扑、发布、消费),非仅自圆其说的往返测试。</p></div>
+        <div class="card"><h3><span class="ico">05</span>JS 后端驱动</h3><p>driver 包完成真实会话:socket 传输经 SharedArrayBuffer + Atomics 同步,连接、开通道、收发、关闭一步到位。</p></div>
+        <div class="card"><h3><span class="ico">06</span>CI 端到端</h3><p>GitHub Actions 5 job:check / build / test / fmt,外加对 RabbitMQ 服务容器的端到端测试,全部全绿。</p></div>
+      </div>
+    </section>
+
+    <section id="quickstart">
+      <h2><span class="hash">#</span> 快速开始</h2>
+      <p class="lead">一条 Docker 命令起 broker,两条命令跑通 RPC 示例。</p>
+      <div class="step">
+        <span class="n">STEP 1 · 起一个本地 broker</span>
+<pre><span class="p">$</span> docker run -d --name moon-amqp-broker -p 5672:5672 \
+  -e RABBITMQ_DEFAULT_USER=guest -e RABBITMQ_DEFAULT_PASS=guest rabbitmq:4</pre>
+      </div>
+      <div class="step">
+        <span class="n">STEP 2 · 构建 RPC 示例(JS 后端)</span>
+<pre><span class="p">$</span> moon build --target js examples/rpc</pre>
+      </div>
+      <div class="step">
+        <span class="n">STEP 3 · 运行</span>
+<pre><span class="p">$</span> node _build/js/debug/build/examples/rpc/rpc.js
+<span class="o">rpc ok: fib(30) = 832040 via callback queue "amq.gen-..."</span></pre>
+      </div>
+      <p style="color:var(--dim);font-size:14px">broker 地址与凭据由 <code style="font-family:var(--mono)">RABBITMQ_HOST</code> / <code style="font-family:var(--mono)">RABBITMQ_USER</code> / <code style="font-family:var(--mono)">RABBITMQ_PASSWORD</code> 环境变量配置(默认 127.0.0.1:5672、guest/guest)。</p>
+    </section>
+
+    <section id="examples">
+      <h2><span class="hash">#</span> 示例程序</h2>
+      <p class="lead">三个可运行示例,是本库 API 的活文档,均已在真实 broker 上跑通。</p>
+      <div class="ex">
+        <div class="card">
+          <h3>work_queues</h3><p>任务队列:durable 队列 + 持久消息(delivery-mode 2),5 个任务逐个确认。展示 publish / consume / ack 的最小组合。</p>
+        </div>
+        <div class="card">
+          <h3>pubsub</h3><p>发布订阅:fanout 交换机 + 两个队列两条绑定,同通道双消费者,一条消息两副本逐一校验。展示 exchange / bind 与多消费者路由。</p>
+        </div>
+        <div class="card">
+          <h3>rpc</h3><p>RPC 应答:exclusive 回调队列捕获 broker 生成名,correlation_id / reply_to 关联,迭代计算 fib(30)。展示请求-应答模式。</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="packages">
+      <h2><span class="hash">#</span> 包结构</h2>
+      <p class="lead">七个包,职责单一,各自可独立 import 与测试。</p>
+      <table>
+        <tr><th>包</th><th>内容</th></tr>
+        <tr><td><code>codec</code></td><td>大端序二进制 Writer / Reader,AMQP 载荷原语</td></tr>
+        <tr><td><code>frame</code></td><td>Frame 类型:method / content header / body / heartbeat</td></tr>
+        <tr><td><code>table</code></td><td>FieldTable 编解码(18 种字段值类型)</td></tr>
+        <tr><td><code>connection</code></td><td>连接类方法、握手交换、心跳、关闭处理</td></tr>
+        <tr><td><code>channel</code></td><td>通道类方法 + exchange / queue 拓扑管理</td></tr>
+        <tr><td><code>basic</code></td><td>基本类方法、ContentHeader、BasicProperties、分发与确认</td></tr>
+        <tr><td><code>driver</code></td><td>会话驱动,含 JS 后端 socket 传输</td></tr>
+      </table>
+    </section>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div>moon-amqp · 2026 年 9 月 MoonBit 黑客松参赛项目 · Apache-2.0</div>
+    <div class="row">
+      <a href="https://github.com/DDD12345-D/moon-amqp">github.com/DDD12345-D/moon-amqp</a>
+      <a href="https://mooncakes.io/packages/DDD12345-D/moon-amqp">mooncakes.io</a>
+      <a href="https://github.com/DDD12345-D/moon-amqp/blob/master/README.mbt.md">README</a>
+      <a href="https://github.com/DDD12345-D/moon-amqp/issues">Issues</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  document.getElementById("copy").addEventListener("click", function () {
+    var cmd = "moon add DDD12345-D/moon-amqp";
+    var btn = this;
+    function ok() { btn.textContent = "已复制 ✓"; setTimeout(function () { btn.textContent = "复制"; }, 1600); }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(cmd).then(ok, ok);
+    } else { ok(); }
+  });
+</script>
+</body>
+</html>
