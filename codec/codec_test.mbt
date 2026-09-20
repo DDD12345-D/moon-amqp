@@ -97,7 +97,7 @@ test "truncation raises" {
     let _ = r.read_u16()
     false
   } catch {
-    CodecError::OutOfRange => true
+    @codec.CodecError::OutOfRange => true
     _ => false
   }
   @test.assert_eq(raised, true)
@@ -120,7 +120,7 @@ test "hostile longstr length" {
     let _ = r.read_longstr()
     false
   } catch {
-    CodecError::OutOfRange => true
+    @codec.CodecError::OutOfRange => true
     _ => false
   }
   @test.assert_eq(raised, true)
@@ -134,7 +134,7 @@ test "shortstr too long raises" {
     w.write_shortstr("x".repeat(256))
     false
   } catch {
-    CodecError::OutOfRange => true
+    @codec.CodecError::OutOfRange => true
     _ => false
   }
   @test.assert_eq(raised, true)

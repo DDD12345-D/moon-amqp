@@ -31,6 +31,13 @@ pub(all) enum HandshakeState {
 } derive(Eq, @debug.Debug)
 
 ///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend HandshakeState with Eq::{not_equal, equal}
+
+///|
+pub extend HandshakeState with @debug.Debug::{to_repr}
+
+///|
 /// Client-side handshake driver (§4.2.2). Feed it the methods the
 /// server sends with `receive`, and build the client's replies with
 /// `start_ok`, `tune_ok`, `open`, `close` and `close_ok`. Every call

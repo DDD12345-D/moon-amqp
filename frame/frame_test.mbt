@@ -14,7 +14,7 @@
 
 ///|
 /// Encode one frame and return its bytes.
-fn enc(f : Frame) -> Bytes {
+fn enc(f : @frame.Frame) -> Bytes {
   let w = @codec.Writer::new()
   f.encode(w)
   w.to_bytes()
@@ -25,12 +25,12 @@ fn enc(f : Frame) -> Bytes {
 /// AMQP 0-9-1 §4.2.6 (type, channel, size, payload, frame-end `0xCE`).
 test "frame golden encode" {
   @test.assert_eq(
-    enc(Frame::Method((1).to_uint16(), b"\x00\x0a\x00\x14")),
+    enc(@frame.Frame::Method((1).to_uint16(), b"\x00\x0a\x00\x14")),
     b"\x01\x00\x01\x00\x00\x00\x04\x00\x0a\x00\x14\xce",
   )
   @test.assert_eq(
     enc(
-      Frame::Header(
+      @frame.Frame::Header(
         (2).to_uint16(),
         b"\x00\x3c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
       ),
@@ -38,10 +38,13 @@ test "frame golden encode" {
     b"\x02\x00\x02\x00\x00\x00\x0c\x00\x3c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xce",
   )
   @test.assert_eq(
-    enc(Frame::Body((3).to_uint16(), b"hello")),
+    enc(@frame.Frame::Body((3).to_uint16(), b"hello")),
     b"\x03\x00\x03\x00\x00\x00\x05hello\xce",
   )
-  @test.assert_eq(enc(Frame::Heartbeat), b"\x08\x00\x00\x00\x00\x00\x00\xce")
+  @test.assert_eq(
+    enc(@frame.Frame::Heartbeat),
+    b"\x08\x00\x00\x00\x00\x00\x00\xce",
+  )
 }
 
 ///|
@@ -49,11 +52,11 @@ test "frame golden encode" {
 /// payload, and channel 0.
 test "frame channel boundaries" {
   @test.assert_eq(
-    enc(Frame::Method((65535).to_uint16(), b"")),
+    enc(@frame.Frame::Method((65535).to_uint16(), b"")),
     b"\x01\xff\xff\x00\x00\x00\x00\xce",
   )
   @test.assert_eq(
-    enc(Frame::Body((0).to_uint16(), b"")),
+    enc(@frame.Frame::Body((0).to_uint16(), b"")),
     b"\x03\x00\x00\x00\x00\x00\x00\xce",
   )
 }
@@ -66,18 +69,21 @@ test "frame golden decode" {
     b"\x01\x00\x01\x00\x00\x00\x04\x00\x0a\x00\x14\xce\x02\x00\x02\x00\x00\x00\x0c\x00\x3c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xce\x03\x00\x03\x00\x00\x00\x05hello\xce\x08\x00\x00\x00\x00\x00\x00\xce",
   )
   @test.assert_eq(
-    Frame::decode(r),
-    Frame::Method((1).to_uint16(), b"\x00\x0a\x00\x14"),
+    @frame.Frame::decode(r),
+    @frame.Frame::Method((1).to_uint16(), b"\x00\x0a\x00\x14"),
   )
   @test.assert_eq(
-    Frame::decode(r),
-    Frame::Header(
+    @frame.Frame::decode(r),
+    @frame.Frame::Header(
       (2).to_uint16(),
       b"\x00\x3c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
     ),
   )
-  @test.assert_eq(Frame::decode(r), Frame::Body((3).to_uint16(), b"hello"))
-  @test.assert_eq(Frame::decode(r), Frame::Heartbeat)
+  @test.assert_eq(
+    @frame.Frame::decode(r),
+    @frame.Frame::Body((3).to_uint16(), b"hello"),
+  )
+  @test.assert_eq(@frame.Frame::decode(r), @frame.Frame::Heartbeat)
   @test.assert_eq(r.is_empty(), true)
 }
 
@@ -85,13 +91,13 @@ test "frame golden decode" {
 /// Every frame type survives an encode/decode roundtrip.
 test "frame roundtrip" {
   let frames = [
-    Frame::Method((1).to_uint16(), b"\x00\x0a\x00\x14"),
-    Frame::Header(
+    @frame.Frame::Method((1).to_uint16(), b"\x00\x0a\x00\x14"),
+    @frame.Frame::Header(
       (2).to_uint16(),
       b"\x00\x3c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
     ),
-    Frame::Body((3).to_uint16(), b"hello"),
-    Frame::Heartbeat,
+    @frame.Frame::Body((3).to_uint16(), b"hello"),
+    @frame.Frame::Heartbeat,
   ]
   let w = @codec.Writer::new()
   for f in frames {
@@ -99,7 +105,7 @@ test "frame roundtrip" {
   }
   let r = @codec.Reader::new(w.to_bytes())
   for f in frames {
-    @test.assert_eq(Frame::decode(r), f)
+    @test.assert_eq(@frame.Frame::decode(r), f)
   }
   @test.assert_eq(r.is_empty(), true)
 }
@@ -115,31 +121,31 @@ test "malformed frames raise" {
       b"", b"\x01\x00", b"\x01\x00\x01\x00\x00\x00\x02\xaa\xbb", b"\x03\x00\x00\xff\xff\xff\xff",
     ] {
     let raised = try {
-      let _ = Frame::decode(@codec.Reader::new(bad))
+      let _ = @frame.Frame::decode(@codec.Reader::new(bad))
       false
     } catch {
-      FrameError::Truncated => true
+      @frame.FrameError::Truncated => true
       _ => false
     }
     @test.assert_eq(raised, true)
   }
   let err = try {
-    let _ = Frame::decode(
+    let _ = @frame.Frame::decode(
       @codec.Reader::new(b"\x07\x00\x00\x00\x00\x00\x00\xce"),
     )
     None
   } catch {
-    FrameError::BadFrameType(t) => Some(t)
+    @frame.FrameError::BadFrameType(t) => Some(t)
     _ => None
   }
   @test.assert_eq(err, Some(b'\x07'))
   let err = try {
-    let _ = Frame::decode(
+    let _ = @frame.Frame::decode(
       @codec.Reader::new(b"\x03\x00\x00\x00\x00\x00\x00\xcf"),
     )
     None
   } catch {
-    FrameError::InvalidFrameEnd(b) => Some(b)
+    @frame.FrameError::InvalidFrameEnd(b) => Some(b)
     _ => None
   }
   @test.assert_eq(err, Some(b'\xcf'))
@@ -148,10 +154,10 @@ test "malformed frames raise" {
       b"\x08\x00\x00\x00\x00\x00\x01\x00\xce", b"\x08\x00\x01\x00\x00\x00\x00\xce",
     ] {
     let raised = try {
-      let _ = Frame::decode(@codec.Reader::new(bad))
+      let _ = @frame.Frame::decode(@codec.Reader::new(bad))
       false
     } catch {
-      FrameError::InvalidHeartbeat => true
+      @frame.FrameError::InvalidHeartbeat => true
       _ => false
     }
     @test.assert_eq(raised, true)

@@ -23,6 +23,13 @@ pub(all) struct Decimal {
 } derive(Eq, @debug.Debug)
 
 ///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend Decimal with Eq::{not_equal, equal}
+
+///|
+pub extend Decimal with @debug.Debug::{to_repr}
+
+///|
 /// A field-table value: one of the AMQP 0-9-1 field types (§4.2.5).
 ///
 /// Each constructor corresponds to one wire tag
@@ -67,6 +74,13 @@ pub(all) enum FieldValue {
   /// `x`: byte array.
   Bytes(Bytes)
 } derive(Eq, @debug.Debug)
+
+///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend FieldValue with Eq::{not_equal, equal}
+
+///|
+pub extend FieldValue with @debug.Debug::{to_repr}
 
 ///|
 /// Append the value's tag octet and payload to `w`.

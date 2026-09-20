@@ -31,6 +31,13 @@ pub(all) struct Start {
 } derive(Eq, @debug.Debug)
 
 ///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend Start with Eq::{not_equal, equal}
+
+///|
+pub extend Start with @debug.Debug::{to_repr}
+
+///|
 /// Connection.Start-Ok (method 11): the client's reply, choosing a
 /// SASL mechanism, a response, and a locale.
 pub(all) struct StartOk {
@@ -44,6 +51,13 @@ pub(all) struct StartOk {
 } derive(Eq, @debug.Debug)
 
 ///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend StartOk with Eq::{not_equal, equal}
+
+///|
+pub extend StartOk with @debug.Debug::{to_repr}
+
+///|
 /// Connection.Tune (method 30): the server's resource negotiation
 /// limits; 0 means "no limit" / "no heartbeat".
 pub(all) struct Tune {
@@ -53,12 +67,26 @@ pub(all) struct Tune {
 } derive(Eq, @debug.Debug)
 
 ///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend Tune with Eq::{not_equal, equal}
+
+///|
+pub extend Tune with @debug.Debug::{to_repr}
+
+///|
 /// Connection.Tune-Ok (method 31): the client's accepted limits.
 pub(all) struct TuneOk {
   channel_max : UInt16
   frame_max : UInt
   heartbeat : UInt16
 } derive(Eq, @debug.Debug)
+
+///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend TuneOk with Eq::{not_equal, equal}
+
+///|
+pub extend TuneOk with @debug.Debug::{to_repr}
 
 ///|
 /// Connection.Open (method 40): the client asks for access to a
@@ -73,12 +101,26 @@ pub(all) struct Open {
 } derive(Eq, @debug.Debug)
 
 ///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend Open with Eq::{not_equal, equal}
+
+///|
+pub extend Open with @debug.Debug::{to_repr}
+
+///|
 /// Connection.Open-Ok (method 41): the server grants virtual-host
 /// access. The reserved field is fixed to an empty string.
 pub(all) struct OpenOk {
   /// Reserved: must be the empty short string (§4.3.11.8).
   reserved_1 : String
 } derive(Eq, @debug.Debug)
+
+///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend OpenOk with Eq::{not_equal, equal}
+
+///|
+pub extend OpenOk with @debug.Debug::{to_repr}
 
 ///|
 /// Connection.Close (method 50): one peer tells the other the
@@ -97,6 +139,13 @@ pub(all) struct Close {
 } derive(Eq, @debug.Debug)
 
 ///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend Close with Eq::{not_equal, equal}
+
+///|
+pub extend Close with @debug.Debug::{to_repr}
+
+///|
 /// One of the Connection-class methods used during the handshake
 /// (§4.3). The payload wire form is: class id, method id, arguments.
 /// `CloseOk` carries no fields (§4.3.13), so its payload is `Unit`.
@@ -110,6 +159,13 @@ pub(all) enum ConnectionMethod {
   Close(Close)
   CloseOk(Unit)
 } derive(Eq, @debug.Debug)
+
+///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend ConnectionMethod with Eq::{not_equal, equal}
+
+///|
+pub extend ConnectionMethod with @debug.Debug::{to_repr}
 
 ///|
 /// Append the method's wire form (class id, method id, arguments) to `w`.

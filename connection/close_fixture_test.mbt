@@ -46,7 +46,7 @@ let client_close_ok : Bytes = b"\x00\x0a\x00\x33"
 test "real client Close decodes and re-encodes identically" {
   @test.assert_eq(
     fixture_dec(client_close),
-    ConnectionMethod::Close(Close::{
+    @connection.ConnectionMethod::@connection.Close(@connection.Close::{
       reply_code: (200).to_uint16(),
       reply_text: "Cheers, thanks",
       class_id: (0).to_uint16(),
@@ -62,7 +62,7 @@ test "real client Close decodes and re-encodes identically" {
 test "real server Close decodes and re-encodes identically" {
   @test.assert_eq(
     fixture_dec(server_close),
-    ConnectionMethod::Close(Close::{
+    @connection.ConnectionMethod::@connection.Close(@connection.Close::{
       reply_code: (320).to_uint16(),
       reply_text: "CONNECTION_FORCED - recorded-batch7",
       class_id: (0).to_uint16(),
@@ -76,8 +76,14 @@ test "real server Close decodes and re-encodes identically" {
 /// The real Close-Ok (identical in both directions) decodes and
 /// re-encodes byte-identically.
 test "real Close-Ok decodes and re-encodes identically" {
-  @test.assert_eq(fixture_dec(server_close_ok), ConnectionMethod::CloseOk(()))
-  @test.assert_eq(fixture_enc(ConnectionMethod::CloseOk(())), server_close_ok)
+  @test.assert_eq(
+    fixture_dec(server_close_ok),
+    @connection.ConnectionMethod::CloseOk(()),
+  )
+  @test.assert_eq(
+    fixture_enc(@connection.ConnectionMethod::CloseOk(())),
+    server_close_ok,
+  )
 }
 
 ///|
@@ -86,7 +92,7 @@ test "real Close-Ok decodes and re-encodes identically" {
 test "recorded server shutdown drives the state machine to Closed" {
   let h = open_handshake()
   h.receive(fixture_dec(server_close))
-  @test.assert_eq(h.state(), HandshakeState::Closed)
+  @test.assert_eq(h.state(), @connection.HandshakeState::Closed)
   match h.close_reason() {
     Some(c) => {
       @test.assert_eq(c.reply_code, (320).to_uint16())
@@ -109,7 +115,7 @@ test "recorded client shutdown closes the connection" {
   let close = h.close((200).to_uint16(), "Cheers, thanks")
   @test.assert_eq(fixture_enc(close), client_close)
   h.receive(fixture_dec(server_close_ok))
-  @test.assert_eq(h.state(), HandshakeState::Closed)
+  @test.assert_eq(h.state(), @connection.HandshakeState::Closed)
   @test.assert_eq(h.close_reason(), None)
 }
 
@@ -122,21 +128,21 @@ test "recorded client shutdown closes the connection" {
 test "recorded 4-second heartbeat cadence" {
   // The idle session: opened at t=0, RabbitMQ heartbeated at 2, 4
   // and 6 seconds (every interval/2), the client closed at t=8.
-  let h = Heartbeat::new((4).to_uint16(), 0)
-  @test.assert_eq(h.poll(1), HeartbeatAction::Nothing)
-  @test.assert_eq(h.poll(2), HeartbeatAction::Send)
+  let h = @connection.Heartbeat::new((4).to_uint16(), 0)
+  @test.assert_eq(h.poll(1), @connection.HeartbeatAction::Nothing)
+  @test.assert_eq(h.poll(2), @connection.HeartbeatAction::Send)
   h.note_sent(2)
   h.note_received(2)
-  @test.assert_eq(h.poll(3), HeartbeatAction::Nothing)
-  @test.assert_eq(h.poll(4), HeartbeatAction::Send)
+  @test.assert_eq(h.poll(3), @connection.HeartbeatAction::Nothing)
+  @test.assert_eq(h.poll(4), @connection.HeartbeatAction::Send)
   h.note_sent(4)
   h.note_received(4)
-  @test.assert_eq(h.poll(5), HeartbeatAction::Nothing)
-  @test.assert_eq(h.poll(6), HeartbeatAction::Send)
+  @test.assert_eq(h.poll(5), @connection.HeartbeatAction::Nothing)
+  @test.assert_eq(h.poll(6), @connection.HeartbeatAction::Send)
   h.note_sent(6)
   h.note_received(6)
-  @test.assert_eq(h.poll(7), HeartbeatAction::Nothing)
+  @test.assert_eq(h.poll(7), @connection.HeartbeatAction::Nothing)
   // Two seconds since the last send: due again; the receive clock is
   // two seconds old, nowhere near the two-interval (8s) timeout.
-  @test.assert_eq(h.poll(8), HeartbeatAction::Send)
+  @test.assert_eq(h.poll(8), @connection.HeartbeatAction::Send)
 }

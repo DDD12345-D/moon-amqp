@@ -24,7 +24,7 @@
 test "broker fixture: publish bytes match amqplib" {
   @test.assert_eq(
     basic_enc(
-      BasicMethod::BasicPublish(BasicPublish::{
+      @basic.BasicMethod::@basic.BasicPublish(@basic.BasicPublish::{
         reserved_1: (0).to_uint16(),
         exchange: "logs",
         routing_key: "info",
@@ -37,9 +37,9 @@ test "broker fixture: publish bytes match amqplib" {
   let headers = @table.FieldTable::new()
   headers.set("x-count", @table.FieldValue::I8(3))
   @test.assert_eq(
-    header_enc(ContentHeader::{
+    header_enc(@basic.ContentHeader::{
       body_size: (5).to_uint64(),
-      properties: BasicProperties::{
+      properties: @basic.BasicProperties::{
         content_type: Some("text/plain"),
         content_encoding: None,
         headers: Some(headers),
@@ -60,7 +60,7 @@ test "broker fixture: publish bytes match amqplib" {
   )
   @test.assert_eq(
     basic_enc(
-      BasicMethod::BasicPublish(BasicPublish::{
+      @basic.BasicMethod::@basic.BasicPublish(@basic.BasicPublish::{
         reserved_1: (0).to_uint16(),
         exchange: "unrouted",
         routing_key: "nobody",
@@ -72,9 +72,9 @@ test "broker fixture: publish bytes match amqplib" {
   )
   // amqplib sends an empty headers table as "present but empty".
   @test.assert_eq(
-    header_enc(ContentHeader::{
+    header_enc(@basic.ContentHeader::{
       body_size: (4).to_uint64(),
-      properties: BasicProperties::{
+      properties: @basic.BasicProperties::{
         content_type: None,
         content_encoding: None,
         headers: Some(@table.FieldTable::new()),
@@ -102,7 +102,7 @@ test "broker fixture: publish bytes match amqplib" {
 test "broker fixture: return bytes decode" {
   @test.assert_eq(
     basic_dec(b"\x00\x3c\x00\x32\x01\x38\x08NO_ROUTE\x08unrouted\x06nobody"),
-    BasicMethod::BasicReturn(BasicReturn::{
+    @basic.BasicMethod::@basic.BasicReturn(@basic.BasicReturn::{
       reply_code: (312).to_uint16(),
       reply_text: "NO_ROUTE",
       exchange: "unrouted",
@@ -113,9 +113,9 @@ test "broker fixture: return bytes decode" {
     header_dec(
       b"\x00\x3c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\x20\x00\x00\x00\x00\x00",
     ),
-    ContentHeader::{
+    @basic.ContentHeader::{
       body_size: (4).to_uint64(),
-      properties: BasicProperties::{
+      properties: @basic.BasicProperties::{
         content_type: None,
         content_encoding: None,
         headers: Some(@table.FieldTable::new()),

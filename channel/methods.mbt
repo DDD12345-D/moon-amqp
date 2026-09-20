@@ -32,12 +32,26 @@ pub(all) struct ChannelOpen {
 } derive(Eq, @debug.Debug)
 
 ///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend ChannelOpen with Eq::{not_equal, equal}
+
+///|
+pub extend ChannelOpen with @debug.Debug::{to_repr}
+
+///|
 /// Channel.Open-Ok (method 11): the server confirms the channel is
 /// open.
 pub(all) struct ChannelOpenOk {
   /// Reserved: must be the empty long string.
   reserved_1 : String
 } derive(Eq, @debug.Debug)
+
+///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend ChannelOpenOk with Eq::{not_equal, equal}
+
+///|
+pub extend ChannelOpenOk with @debug.Debug::{to_repr}
 
 ///|
 /// Channel.Flow (method 20): either peer asks the other to pause or
@@ -48,11 +62,25 @@ pub(all) struct ChannelFlow {
 } derive(Eq, @debug.Debug)
 
 ///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend ChannelFlow with Eq::{not_equal, equal}
+
+///|
+pub extend ChannelFlow with @debug.Debug::{to_repr}
+
+///|
 /// Channel.Flow-Ok (method 21): confirms a flow change.
 pub(all) struct ChannelFlowOk {
   /// `true` starts delivery, `false` pauses it.
   active : Bool
 } derive(Eq, @debug.Debug)
+
+///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend ChannelFlowOk with Eq::{not_equal, equal}
+
+///|
+pub extend ChannelFlowOk with @debug.Debug::{to_repr}
 
 ///|
 /// Channel.Close (method 40): a peer reports an error on this channel
@@ -67,6 +95,13 @@ pub(all) struct ChannelClose {
   /// Method id of the method that failed, when applicable.
   method_id : UInt16
 } derive(Eq, @debug.Debug)
+
+///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend ChannelClose with Eq::{not_equal, equal}
+
+///|
+pub extend ChannelClose with @debug.Debug::{to_repr}
 
 ///|
 /// Exchange.Declare (method 10): declare an exchange, or verify one
@@ -96,6 +131,13 @@ pub(all) struct ExchangeDeclare {
 } derive(Eq, @debug.Debug)
 
 ///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend ExchangeDeclare with Eq::{not_equal, equal}
+
+///|
+pub extend ExchangeDeclare with @debug.Debug::{to_repr}
+
+///|
 /// Exchange.Delete (method 20): delete an exchange. The two bits are
 /// packed into one octet (§4.2.5.2): if-unused, no-wait.
 pub(all) struct ExchangeDelete {
@@ -108,6 +150,13 @@ pub(all) struct ExchangeDelete {
   /// Do not expect a Delete-Ok reply.
   no_wait : Bool
 } derive(Eq, @debug.Debug)
+
+///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend ExchangeDelete with Eq::{not_equal, equal}
+
+///|
+pub extend ExchangeDelete with @debug.Debug::{to_repr}
 
 ///|
 /// Exchange.Bind (method 30): bind two exchanges together.
@@ -128,6 +177,13 @@ pub(all) struct ExchangeBind {
 } derive(Eq, @debug.Debug)
 
 ///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend ExchangeBind with Eq::{not_equal, equal}
+
+///|
+pub extend ExchangeBind with @debug.Debug::{to_repr}
+
+///|
 /// Exchange.Unbind (method 40): remove an exchange-to-exchange
 /// binding.
 pub(all) struct ExchangeUnbind {
@@ -144,6 +200,13 @@ pub(all) struct ExchangeUnbind {
   /// Binding arguments.
   arguments : @table.FieldTable
 } derive(Eq, @debug.Debug)
+
+///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend ExchangeUnbind with Eq::{not_equal, equal}
+
+///|
+pub extend ExchangeUnbind with @debug.Debug::{to_repr}
 
 ///|
 /// Queue.Declare (method 10): declare a queue, or verify one exists
@@ -171,6 +234,13 @@ pub(all) struct QueueDeclare {
 } derive(Eq, @debug.Debug)
 
 ///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend QueueDeclare with Eq::{not_equal, equal}
+
+///|
+pub extend QueueDeclare with @debug.Debug::{to_repr}
+
+///|
 /// Queue.Declare-Ok (method 11): the server confirms the declaration
 /// and reports the queue's name and current usage.
 pub(all) struct QueueDeclareOk {
@@ -181,6 +251,13 @@ pub(all) struct QueueDeclareOk {
   /// Number of consumers currently attached.
   consumer_count : UInt
 } derive(Eq, @debug.Debug)
+
+///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend QueueDeclareOk with Eq::{not_equal, equal}
+
+///|
+pub extend QueueDeclareOk with @debug.Debug::{to_repr}
 
 ///|
 /// Queue.Bind (method 20): bind a queue to an exchange.
@@ -200,6 +277,13 @@ pub(all) struct QueueBind {
 } derive(Eq, @debug.Debug)
 
 ///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend QueueBind with Eq::{not_equal, equal}
+
+///|
+pub extend QueueBind with @debug.Debug::{to_repr}
+
+///|
 /// Queue.Purge (method 30): drop all ready messages from a queue.
 pub(all) struct QueuePurge {
   /// Reserved: must be 0 (a leftover ticket from AMQP 0-8).
@@ -211,11 +295,25 @@ pub(all) struct QueuePurge {
 } derive(Eq, @debug.Debug)
 
 ///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend QueuePurge with Eq::{not_equal, equal}
+
+///|
+pub extend QueuePurge with @debug.Debug::{to_repr}
+
+///|
 /// Queue.Purge-Ok (method 31): confirms the purge.
 pub(all) struct QueuePurgeOk {
   /// Number of messages that were dropped.
   message_count : UInt
 } derive(Eq, @debug.Debug)
+
+///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend QueuePurgeOk with Eq::{not_equal, equal}
+
+///|
+pub extend QueuePurgeOk with @debug.Debug::{to_repr}
 
 ///|
 /// Queue.Delete (method 40): delete a queue. The three bits are
@@ -234,11 +332,25 @@ pub(all) struct QueueDelete {
 } derive(Eq, @debug.Debug)
 
 ///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend QueueDelete with Eq::{not_equal, equal}
+
+///|
+pub extend QueueDelete with @debug.Debug::{to_repr}
+
+///|
 /// Queue.Delete-Ok (method 41): confirms the deletion.
 pub(all) struct QueueDeleteOk {
   /// Number of messages that were deleted with the queue.
   message_count : UInt
 } derive(Eq, @debug.Debug)
+
+///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend QueueDeleteOk with Eq::{not_equal, equal}
+
+///|
+pub extend QueueDeleteOk with @debug.Debug::{to_repr}
 
 ///|
 /// Queue.Unbind (method 50): remove a queue-to-exchange binding.
@@ -255,6 +367,13 @@ pub(all) struct QueueUnbind {
   /// Binding arguments.
   arguments : @table.FieldTable
 } derive(Eq, @debug.Debug)
+
+///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend QueueUnbind with Eq::{not_equal, equal}
+
+///|
+pub extend QueueUnbind with @debug.Debug::{to_repr}
 
 ///|
 /// One of the channel- (20), exchange- (40) or queue-class (50)
@@ -286,6 +405,13 @@ pub(all) enum ChannelMethod {
   QueueUnbind(QueueUnbind)
   QueueUnbindOk
 } derive(Eq, @debug.Debug)
+
+///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend ChannelMethod with Eq::{not_equal, equal}
+
+///|
+pub extend ChannelMethod with @debug.Debug::{to_repr}
 
 ///|
 /// Append the method's wire form (class id, method id, arguments) to `w`.

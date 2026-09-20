@@ -14,7 +14,7 @@
 
 ///|
 /// Encode one content header to its payload bytes.
-fn header_enc(h : ContentHeader) -> Bytes raise BasicError {
+fn header_enc(h : @basic.ContentHeader) -> Bytes raise @basic.BasicError {
   let w = @codec.Writer::new()
   h.encode(w)
   w.to_bytes()
@@ -26,9 +26,9 @@ fn header_enc(h : ContentHeader) -> Bytes raise BasicError {
 /// in wire order (high flag bit first). The vectors are hand-derived.
 test "content header golden encode" {
   @test.assert_eq(
-    header_enc(ContentHeader::{
+    header_enc(@basic.ContentHeader::{
       body_size: (5).to_uint64(),
-      properties: BasicProperties::{
+      properties: @basic.BasicProperties::{
         content_type: Some("text/plain"),
         content_encoding: None,
         headers: None,
@@ -48,18 +48,18 @@ test "content header golden encode" {
     b"\x00\x3c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x05\x90\x00\x0atext/plain\x02",
   )
   @test.assert_eq(
-    header_enc(ContentHeader::{
+    header_enc(@basic.ContentHeader::{
       body_size: (0).to_uint64(),
-      properties: BasicProperties::new(),
+      properties: @basic.BasicProperties::new(),
     }),
     b"\x00\x3c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
   )
   let headers = @table.FieldTable::new()
   headers.set("x-count", @table.FieldValue::I8(3))
   @test.assert_eq(
-    header_enc(ContentHeader::{
+    header_enc(@basic.ContentHeader::{
       body_size: (3).to_uint64(),
-      properties: BasicProperties::{
+      properties: @basic.BasicProperties::{
         content_type: None,
         content_encoding: None,
         headers: Some(headers),
@@ -79,9 +79,9 @@ test "content header golden encode" {
     b"\x00\x3c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x03\x26\x00\x00\x00\x00\x0a\x07x-count\x62\x03\x03abc\x02me",
   )
   @test.assert_eq(
-    header_enc(ContentHeader::{
+    header_enc(@basic.ContentHeader::{
       body_size: (0).to_uint64(),
-      properties: BasicProperties::{
+      properties: @basic.BasicProperties::{
         content_type: None,
         content_encoding: None,
         headers: None,
@@ -101,9 +101,9 @@ test "content header golden encode" {
     b"\x00\x3c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x40\x00\x00\x00\x00\x66\xeb\xf6\x20",
   )
   @test.assert_eq(
-    header_enc(ContentHeader::{
+    header_enc(@basic.ContentHeader::{
       body_size: (1).to_uint64(),
-      properties: BasicProperties::{
+      properties: @basic.BasicProperties::{
         content_type: None,
         content_encoding: None,
         headers: None,
@@ -128,9 +128,9 @@ test "content header golden encode" {
 /// The spec fixes cluster-id to the empty string when present.
 test "non-empty cluster-id raises" {
   let raised = try {
-    let _ = header_enc(ContentHeader::{
+    let _ = header_enc(@basic.ContentHeader::{
       body_size: (0).to_uint64(),
-      properties: BasicProperties::{
+      properties: @basic.BasicProperties::{
         content_type: None,
         content_encoding: None,
         headers: None,
@@ -149,7 +149,7 @@ test "non-empty cluster-id raises" {
     })
     false
   } catch {
-    BasicError::ValueOutOfRange(_) => true
+    @basic.BasicError::ValueOutOfRange(_) => true
     _ => false
   }
   @test.assert_eq(raised, true)
@@ -157,8 +157,8 @@ test "non-empty cluster-id raises" {
 
 ///|
 /// Decode one content header payload.
-fn header_dec(payload : Bytes) -> ContentHeader raise BasicError {
-  ContentHeader::decode(@codec.Reader::new(payload))
+fn header_dec(payload : Bytes) -> @basic.ContentHeader raise @basic.BasicError {
+  @basic.ContentHeader::decode(@codec.Reader::new(payload))
 }
 
 ///|
@@ -168,9 +168,9 @@ test "content header golden decode" {
     header_dec(
       b"\x00\x3c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x05\x90\x00\x0atext/plain\x02",
     ),
-    ContentHeader::{
+    @basic.ContentHeader::{
       body_size: (5).to_uint64(),
-      properties: BasicProperties::{
+      properties: @basic.BasicProperties::{
         content_type: Some("text/plain"),
         content_encoding: None,
         headers: None,
@@ -190,9 +190,9 @@ test "content header golden decode" {
   )
   @test.assert_eq(
     header_dec(b"\x00\x3c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"),
-    ContentHeader::{
+    @basic.ContentHeader::{
       body_size: (0).to_uint64(),
-      properties: BasicProperties::new(),
+      properties: @basic.BasicProperties::new(),
     },
   )
   let headers = @table.FieldTable::new()
@@ -201,9 +201,9 @@ test "content header golden decode" {
     header_dec(
       b"\x00\x3c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x03\x26\x00\x00\x00\x00\x0a\x07x-count\x62\x03\x03abc\x02me",
     ),
-    ContentHeader::{
+    @basic.ContentHeader::{
       body_size: (3).to_uint64(),
-      properties: BasicProperties::{
+      properties: @basic.BasicProperties::{
         content_type: None,
         content_encoding: None,
         headers: Some(headers),
@@ -225,9 +225,9 @@ test "content header golden decode" {
     header_dec(
       b"\x00\x3c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x40\x00\x00\x00\x00\x66\xeb\xf6\x20",
     ),
-    ContentHeader::{
+    @basic.ContentHeader::{
       body_size: (0).to_uint64(),
-      properties: BasicProperties::{
+      properties: @basic.BasicProperties::{
         content_type: None,
         content_encoding: None,
         headers: None,
@@ -247,9 +247,9 @@ test "content header golden decode" {
   )
   @test.assert_eq(
     header_dec(b"\x00\x3c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x08\x00\x09"),
-    ContentHeader::{
+    @basic.ContentHeader::{
       body_size: (1).to_uint64(),
-      properties: BasicProperties::{
+      properties: @basic.BasicProperties::{
         content_type: None,
         content_encoding: None,
         headers: None,
@@ -276,7 +276,7 @@ test "content header golden decode" {
 test "content header roundtrip" {
   let headers = @table.FieldTable::new()
   headers.set("x-death-count", @table.FieldValue::I32(2))
-  let all = BasicProperties::{
+  let all = @basic.BasicProperties::{
     content_type: Some("application/json"),
     content_encoding: Some("gzip"),
     headers: Some(headers),
@@ -292,7 +292,7 @@ test "content header roundtrip" {
     app_id: Some("moon-amqp"),
     cluster_id: Some(""),
   }
-  let scattered = BasicProperties::{
+  let scattered = @basic.BasicProperties::{
     content_type: None,
     content_encoding: Some("br"),
     headers: None,
@@ -310,8 +310,11 @@ test "content header roundtrip" {
   }
   for
     h in [
-      ContentHeader::{ body_size: (4096).to_uint64(), properties: all, },
-      ContentHeader::{ body_size: (0).to_uint64(), properties: scattered, },
+      @basic.ContentHeader::{ body_size: (4096).to_uint64(), properties: all, },
+      @basic.ContentHeader::{
+        body_size: (0).to_uint64(),
+        properties: scattered,
+      },
     ] {
     @test.assert_eq(header_dec(header_enc(h)), h)
   }
@@ -327,7 +330,7 @@ test "unexpected class raises" {
     )
     None
   } catch {
-    BasicError::UnexpectedClass(c) => Some(c)
+    @basic.BasicError::UnexpectedClass(c) => Some(c)
     _ => None
   }
   @test.assert_eq(err, Some((20).to_uint16()))
@@ -344,7 +347,7 @@ test "truncated input raises" {
       let _ = header_dec(payload)
       false
     } catch {
-      BasicError::Truncated => true
+      @basic.BasicError::Truncated => true
       _ => false
     }
     @test.assert_eq(raised, true)
@@ -359,9 +362,9 @@ test "continuation flag field is consumed" {
     header_dec(
       b"\x00\x3c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00",
     ),
-    ContentHeader::{
+    @basic.ContentHeader::{
       body_size: (0).to_uint64(),
-      properties: BasicProperties::new(),
+      properties: @basic.BasicProperties::new(),
     },
   )
 }
@@ -371,9 +374,9 @@ test "continuation flag field is consumed" {
 test "unknown flag bits are ignored" {
   @test.assert_eq(
     header_dec(b"\x00\x3c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02"),
-    ContentHeader::{
+    @basic.ContentHeader::{
       body_size: (0).to_uint64(),
-      properties: BasicProperties::new(),
+      properties: @basic.BasicProperties::new(),
     },
   )
 }
@@ -387,7 +390,7 @@ test "invalid utf-8 raises" {
     )
     false
   } catch {
-    BasicError::InvalidUtf8 => true
+    @basic.BasicError::InvalidUtf8 => true
     _ => false
   }
   @test.assert_eq(raised, true)
@@ -402,7 +405,7 @@ test "malformed table raises" {
     )
     false
   } catch {
-    BasicError::InvalidTable(_) => true
+    @basic.BasicError::InvalidTable(_) => true
     _ => false
   }
   @test.assert_eq(raised, true)

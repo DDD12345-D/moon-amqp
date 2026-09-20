@@ -24,6 +24,13 @@ pub struct FieldTable {
 } derive(Eq, @debug.Debug)
 
 ///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend FieldTable with Eq::{not_equal, equal}
+
+///|
+pub extend FieldTable with @debug.Debug::{to_repr}
+
+///|
 /// An empty table.
 pub fn FieldTable::new() -> FieldTable {
   { entries: [], }

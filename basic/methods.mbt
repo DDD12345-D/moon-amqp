@@ -37,6 +37,13 @@ pub(all) struct BasicPublish {
 } derive(Eq, @debug.Debug)
 
 ///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend BasicPublish with Eq::{not_equal, equal}
+
+///|
+pub extend BasicPublish with @debug.Debug::{to_repr}
+
+///|
 /// Basic.Return (method 50): the server returns an unroutable message
 /// that was published with `mandatory` set. It is followed by the
 /// message's content header and body frames.
@@ -52,6 +59,13 @@ pub(all) struct BasicReturn {
 } derive(Eq, @debug.Debug)
 
 ///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend BasicReturn with Eq::{not_equal, equal}
+
+///|
+pub extend BasicReturn with @debug.Debug::{to_repr}
+
+///|
 /// Basic.Qos (method 10): set the prefetch window of a channel. The
 /// broker sends at most `prefetch_count` messages before waiting for
 /// settlements.
@@ -65,6 +79,13 @@ pub(all) struct BasicQos {
   /// channel. RabbitMQ does not implement this.
   global : Bool
 } derive(Eq, @debug.Debug)
+
+///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend BasicQos with Eq::{not_equal, equal}
+
+///|
+pub extend BasicQos with @debug.Debug::{to_repr}
 
 ///|
 /// Basic.Consume (method 20): start a consumer on a queue. The
@@ -91,6 +112,13 @@ pub(all) struct BasicConsume {
 } derive(Eq, @debug.Debug)
 
 ///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend BasicConsume with Eq::{not_equal, equal}
+
+///|
+pub extend BasicConsume with @debug.Debug::{to_repr}
+
+///|
 /// Basic.ConsumeOk (method 21): the server confirms the consumer
 /// and reports the tag deliveries will use.
 pub(all) struct BasicConsumeOk {
@@ -98,6 +126,13 @@ pub(all) struct BasicConsumeOk {
   /// sent an empty tag).
   consumer_tag : String
 } derive(Eq, @debug.Debug)
+
+///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend BasicConsumeOk with Eq::{not_equal, equal}
+
+///|
+pub extend BasicConsumeOk with @debug.Debug::{to_repr}
 
 ///|
 /// Basic.Cancel (method 30): stop a consumer. The broker stops
@@ -110,12 +145,26 @@ pub(all) struct BasicCancel {
 } derive(Eq, @debug.Debug)
 
 ///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend BasicCancel with Eq::{not_equal, equal}
+
+///|
+pub extend BasicCancel with @debug.Debug::{to_repr}
+
+///|
 /// Basic.CancelOk (method 31): the server confirms the
 /// cancellation.
 pub(all) struct BasicCancelOk {
   /// The cancelled consumer tag.
   consumer_tag : String
 } derive(Eq, @debug.Debug)
+
+///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend BasicCancelOk with Eq::{not_equal, equal}
+
+///|
+pub extend BasicCancelOk with @debug.Debug::{to_repr}
 
 ///|
 /// Basic.Deliver (method 60): the server delivers a message to a
@@ -137,6 +186,13 @@ pub(all) struct BasicDeliver {
 } derive(Eq, @debug.Debug)
 
 ///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend BasicDeliver with Eq::{not_equal, equal}
+
+///|
+pub extend BasicDeliver with @debug.Debug::{to_repr}
+
+///|
 /// Basic.Get (method 70): poll one message from a queue without
 /// registering a consumer.
 pub(all) struct BasicGet {
@@ -147,6 +203,13 @@ pub(all) struct BasicGet {
   /// The message needs no acknowledgement.
   no_ack : Bool
 } derive(Eq, @debug.Debug)
+
+///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend BasicGet with Eq::{not_equal, equal}
+
+///|
+pub extend BasicGet with @debug.Debug::{to_repr}
 
 ///|
 /// Basic.GetOk (method 71): a message was available; it follows as
@@ -165,12 +228,26 @@ pub(all) struct BasicGetOk {
 } derive(Eq, @debug.Debug)
 
 ///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend BasicGetOk with Eq::{not_equal, equal}
+
+///|
+pub extend BasicGetOk with @debug.Debug::{to_repr}
+
+///|
 /// Basic.GetEmpty (method 72): the queue holds no message.
 pub(all) struct BasicGetEmpty {
   /// Reserved short string; the spec names the field `cluster-id`
   /// and fixes it to the empty string.
   cluster_id : String
 } derive(Eq, @debug.Debug)
+
+///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend BasicGetEmpty with Eq::{not_equal, equal}
+
+///|
+pub extend BasicGetEmpty with @debug.Debug::{to_repr}
 
 ///|
 /// Basic.Ack (method 80): settle deliveries.
@@ -181,6 +258,13 @@ pub(all) struct BasicAck {
   /// `delivery_tag`.
   multiple : Bool
 } derive(Eq, @debug.Debug)
+
+///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend BasicAck with Eq::{not_equal, equal}
+
+///|
+pub extend BasicAck with @debug.Debug::{to_repr}
 
 ///|
 /// Basic.Reject (method 90): reject one delivery. Prefer Basic.Nack,
@@ -194,12 +278,26 @@ pub(all) struct BasicReject {
 } derive(Eq, @debug.Debug)
 
 ///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend BasicReject with Eq::{not_equal, equal}
+
+///|
+pub extend BasicReject with @debug.Debug::{to_repr}
+
+///|
 /// Basic.RecoverAsync (method 100): deprecated recovery request that
 /// received no confirmation; use Basic.Recover instead.
 pub(all) struct BasicRecoverAsync {
   /// Return all unacknowledged messages to their queues.
   requeue : Bool
 } derive(Eq, @debug.Debug)
+
+///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend BasicRecoverAsync with Eq::{not_equal, equal}
+
+///|
+pub extend BasicRecoverAsync with @debug.Debug::{to_repr}
 
 ///|
 /// Basic.Recover (method 110): ask the broker to redeliver the
@@ -210,6 +308,13 @@ pub(all) struct BasicRecover {
   /// as-is to their original consumers.
   requeue : Bool
 } derive(Eq, @debug.Debug)
+
+///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend BasicRecover with Eq::{not_equal, equal}
+
+///|
+pub extend BasicRecover with @debug.Debug::{to_repr}
 
 ///|
 /// Basic.Nack (method 120, a RabbitMQ extension): reject deliveries,
@@ -224,6 +329,13 @@ pub(all) struct BasicNack {
   /// the broker drops the message (or dead-letters it).
   requeue : Bool
 } derive(Eq, @debug.Debug)
+
+///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend BasicNack with Eq::{not_equal, equal}
+
+///|
+pub extend BasicNack with @debug.Debug::{to_repr}
 
 ///|
 /// The methods of the basic class (60): publishing and the
@@ -249,6 +361,13 @@ pub(all) enum BasicMethod {
   BasicRecoverOk(Unit)
   BasicNack(BasicNack)
 } derive(Eq, @debug.Debug)
+
+///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend BasicMethod with Eq::{not_equal, equal}
+
+///|
+pub extend BasicMethod with @debug.Debug::{to_repr}
 
 ///|
 /// Encode the method payload: class id, method id, arguments

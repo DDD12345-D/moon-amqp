@@ -14,7 +14,7 @@
 
 ///|
 /// Encode one channel-class method to its payload bytes.
-fn chan_enc(m : ChannelMethod) -> Bytes raise ChannelError {
+fn chan_enc(m : @channel.ChannelMethod) -> Bytes raise @channel.ChannelError {
   let w = @codec.Writer::new()
   m.encode(w)
   w.to_bytes()
@@ -25,28 +25,48 @@ fn chan_enc(m : ChannelMethod) -> Bytes raise ChannelError {
 /// hand-derived from §3.2.2 — class id, method id, arguments.
 test "channel methods golden encode" {
   @test.assert_eq(
-    chan_enc(ChannelMethod::ChannelOpen(ChannelOpen::{ reserved_1: "", })),
+    chan_enc(
+      @channel.ChannelMethod::@channel.ChannelOpen(@channel.ChannelOpen::{
+        reserved_1: "",
+      }),
+    ),
     b"\x00\x14\x00\x0a\x00",
   )
   @test.assert_eq(
-    chan_enc(ChannelMethod::ChannelOpenOk(ChannelOpenOk::{ reserved_1: "", })),
+    chan_enc(
+      @channel.ChannelMethod::@channel.ChannelOpenOk(@channel.ChannelOpenOk::{
+        reserved_1: "",
+      }),
+    ),
     b"\x00\x14\x00\x0b\x00\x00\x00\x00",
   )
   @test.assert_eq(
-    chan_enc(ChannelMethod::ChannelFlow(ChannelFlow::{ active: true, })),
+    chan_enc(
+      @channel.ChannelMethod::@channel.ChannelFlow(@channel.ChannelFlow::{
+        active: true,
+      }),
+    ),
     b"\x00\x14\x00\x14\x01",
   )
   @test.assert_eq(
-    chan_enc(ChannelMethod::ChannelFlow(ChannelFlow::{ active: false, })),
+    chan_enc(
+      @channel.ChannelMethod::@channel.ChannelFlow(@channel.ChannelFlow::{
+        active: false,
+      }),
+    ),
     b"\x00\x14\x00\x14\x00",
   )
   @test.assert_eq(
-    chan_enc(ChannelMethod::ChannelFlowOk(ChannelFlowOk::{ active: true, })),
+    chan_enc(
+      @channel.ChannelMethod::@channel.ChannelFlowOk(@channel.ChannelFlowOk::{
+        active: true,
+      }),
+    ),
     b"\x00\x14\x00\x15\x01",
   )
   @test.assert_eq(
     chan_enc(
-      ChannelMethod::ChannelClose(ChannelClose::{
+      @channel.ChannelMethod::@channel.ChannelClose(@channel.ChannelClose::{
         reply_code: (200).to_uint16(),
         reply_text: "ok",
         class_id: (60).to_uint16(),
@@ -55,7 +75,10 @@ test "channel methods golden encode" {
     ),
     b"\x00\x14\x00\x28\x00\xc8\x02ok\x00\x3c\x00\x28",
   )
-  @test.assert_eq(chan_enc(ChannelMethod::ChannelCloseOk), b"\x00\x14\x00\x29")
+  @test.assert_eq(
+    chan_enc(@channel.ChannelMethod::ChannelCloseOk),
+    b"\x00\x14\x00\x29",
+  )
 }
 
 ///|
@@ -63,11 +86,13 @@ test "channel methods golden encode" {
 test "channel.open reserved-1 must be empty" {
   let raised = try {
     let _ = chan_enc(
-      ChannelMethod::ChannelOpen(ChannelOpen::{ reserved_1: "ticket", }),
+      @channel.ChannelMethod::@channel.ChannelOpen(@channel.ChannelOpen::{
+        reserved_1: "ticket",
+      }),
     )
     false
   } catch {
-    ChannelError::ValueOutOfRange(_) => true
+    @channel.ChannelError::ValueOutOfRange(_) => true
     _ => false
   }
   @test.assert_eq(raised, true)
@@ -78,11 +103,13 @@ test "channel.open reserved-1 must be empty" {
 test "channel.open-ok reserved-1 must be empty" {
   let raised = try {
     let _ = chan_enc(
-      ChannelMethod::ChannelOpenOk(ChannelOpenOk::{ reserved_1: "chan-1", }),
+      @channel.ChannelMethod::@channel.ChannelOpenOk(@channel.ChannelOpenOk::{
+        reserved_1: "chan-1",
+      }),
     )
     false
   } catch {
-    ChannelError::ValueOutOfRange(_) => true
+    @channel.ChannelError::ValueOutOfRange(_) => true
     _ => false
   }
   @test.assert_eq(raised, true)
@@ -94,7 +121,7 @@ test "channel.open-ok reserved-1 must be empty" {
 test "reply text over 255 bytes raises" {
   let raised = try {
     let _ = chan_enc(
-      ChannelMethod::ChannelClose(ChannelClose::{
+      @channel.ChannelMethod::@channel.ChannelClose(@channel.ChannelClose::{
         reply_code: (406).to_uint16(),
         reply_text: "x".repeat(256),
         class_id: (0).to_uint16(),
@@ -103,7 +130,7 @@ test "reply text over 255 bytes raises" {
     )
     false
   } catch {
-    ChannelError::ValueOutOfRange(_) => true
+    @channel.ChannelError::ValueOutOfRange(_) => true
     _ => false
   }
   @test.assert_eq(raised, true)
@@ -111,8 +138,10 @@ test "reply text over 255 bytes raises" {
 
 ///|
 /// Decode one channel-class method payload.
-fn chan_dec(payload : Bytes) -> ChannelMethod raise ChannelError {
-  ChannelMethod::decode(@codec.Reader::new(payload))
+fn chan_dec(
+  payload : Bytes,
+) -> @channel.ChannelMethod raise @channel.ChannelError {
+  @channel.ChannelMethod::decode(@codec.Reader::new(payload))
 }
 
 ///|
@@ -120,34 +149,47 @@ fn chan_dec(payload : Bytes) -> ChannelMethod raise ChannelError {
 test "channel methods golden decode" {
   @test.assert_eq(
     chan_dec(b"\x00\x14\x00\x0a\x00"),
-    ChannelMethod::ChannelOpen(ChannelOpen::{ reserved_1: "", }),
+    @channel.ChannelMethod::@channel.ChannelOpen(@channel.ChannelOpen::{
+      reserved_1: "",
+    }),
   )
   @test.assert_eq(
     chan_dec(b"\x00\x14\x00\x0b\x00\x00\x00\x00"),
-    ChannelMethod::ChannelOpenOk(ChannelOpenOk::{ reserved_1: "", }),
+    @channel.ChannelMethod::@channel.ChannelOpenOk(@channel.ChannelOpenOk::{
+      reserved_1: "",
+    }),
   )
   @test.assert_eq(
     chan_dec(b"\x00\x14\x00\x14\x01"),
-    ChannelMethod::ChannelFlow(ChannelFlow::{ active: true, }),
+    @channel.ChannelMethod::@channel.ChannelFlow(@channel.ChannelFlow::{
+      active: true,
+    }),
   )
   @test.assert_eq(
     chan_dec(b"\x00\x14\x00\x14\x00"),
-    ChannelMethod::ChannelFlow(ChannelFlow::{ active: false, }),
+    @channel.ChannelMethod::@channel.ChannelFlow(@channel.ChannelFlow::{
+      active: false,
+    }),
   )
   @test.assert_eq(
     chan_dec(b"\x00\x14\x00\x15\x01"),
-    ChannelMethod::ChannelFlowOk(ChannelFlowOk::{ active: true, }),
+    @channel.ChannelMethod::@channel.ChannelFlowOk(@channel.ChannelFlowOk::{
+      active: true,
+    }),
   )
   @test.assert_eq(
     chan_dec(b"\x00\x14\x00\x28\x00\xc8\x02ok\x00\x3c\x00\x28"),
-    ChannelMethod::ChannelClose(ChannelClose::{
+    @channel.ChannelMethod::@channel.ChannelClose(@channel.ChannelClose::{
       reply_code: (200).to_uint16(),
       reply_text: "ok",
       class_id: (60).to_uint16(),
       method_id: (40).to_uint16(),
     }),
   )
-  @test.assert_eq(chan_dec(b"\x00\x14\x00\x29"), ChannelMethod::ChannelCloseOk)
+  @test.assert_eq(
+    chan_dec(b"\x00\x14\x00\x29"),
+    @channel.ChannelMethod::ChannelCloseOk,
+  )
 }
 
 ///|
@@ -155,18 +197,28 @@ test "channel methods golden decode" {
 test "channel methods roundtrip" {
   for
     m in [
-      ChannelMethod::ChannelOpen(ChannelOpen::{ reserved_1: "", }),
-      ChannelMethod::ChannelOpenOk(ChannelOpenOk::{ reserved_1: "", }),
-      ChannelMethod::ChannelFlow(ChannelFlow::{ active: true, }),
-      ChannelMethod::ChannelFlow(ChannelFlow::{ active: false, }),
-      ChannelMethod::ChannelFlowOk(ChannelFlowOk::{ active: true, }),
-      ChannelMethod::ChannelClose(ChannelClose::{
+      @channel.ChannelMethod::@channel.ChannelOpen(@channel.ChannelOpen::{
+        reserved_1: "",
+      }),
+      @channel.ChannelMethod::@channel.ChannelOpenOk(@channel.ChannelOpenOk::{
+        reserved_1: "",
+      }),
+      @channel.ChannelMethod::@channel.ChannelFlow(@channel.ChannelFlow::{
+        active: true,
+      }),
+      @channel.ChannelMethod::@channel.ChannelFlow(@channel.ChannelFlow::{
+        active: false,
+      }),
+      @channel.ChannelMethod::@channel.ChannelFlowOk(@channel.ChannelFlowOk::{
+        active: true,
+      }),
+      @channel.ChannelMethod::@channel.ChannelClose(@channel.ChannelClose::{
         reply_code: (320).to_uint16(),
         reply_text: "bye",
         class_id: (0).to_uint16(),
         method_id: (0).to_uint16(),
       }),
-      ChannelMethod::ChannelCloseOk,
+      @channel.ChannelMethod::ChannelCloseOk,
     ] {
     @test.assert_eq(chan_dec(chan_enc(m)), m)
   }

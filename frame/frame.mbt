@@ -32,6 +32,13 @@ pub(all) enum Frame {
 } derive(Eq, @debug.Debug)
 
 ///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend Frame with Eq::{not_equal, equal}
+
+///|
+pub extend Frame with @debug.Debug::{to_repr}
+
+///|
 /// Append the frame's wire form (type, channel, size, payload,
 /// frame-end `0xCE`) to `w`.
 ///

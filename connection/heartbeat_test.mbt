@@ -16,25 +16,25 @@
 /// A 60-second interval asks for a heartbeat once no frame has been
 /// sent for half the interval, and only then.
 test "heartbeat is due after half an interval without sends" {
-  let h = Heartbeat::new((60).to_uint16(), 0)
-  @test.assert_eq(h.poll(0), HeartbeatAction::Nothing)
-  @test.assert_eq(h.poll(29), HeartbeatAction::Nothing)
-  @test.assert_eq(h.poll(30), HeartbeatAction::Send)
+  let h = @connection.Heartbeat::new((60).to_uint16(), 0)
+  @test.assert_eq(h.poll(0), @connection.HeartbeatAction::Nothing)
+  @test.assert_eq(h.poll(29), @connection.HeartbeatAction::Nothing)
+  @test.assert_eq(h.poll(30), @connection.HeartbeatAction::Send)
   h.note_sent(31)
-  @test.assert_eq(h.poll(60), HeartbeatAction::Nothing)
-  @test.assert_eq(h.poll(61), HeartbeatAction::Send)
+  @test.assert_eq(h.poll(60), @connection.HeartbeatAction::Nothing)
+  @test.assert_eq(h.poll(61), @connection.HeartbeatAction::Send)
 }
 
 ///|
 /// Any frame sent resets the send clock, including the heartbeat
 /// itself.
 test "sending any frame resets the send clock" {
-  let h = Heartbeat::new((60).to_uint16(), 0)
-  @test.assert_eq(h.poll(30), HeartbeatAction::Send)
+  let h = @connection.Heartbeat::new((60).to_uint16(), 0)
+  @test.assert_eq(h.poll(30), @connection.HeartbeatAction::Send)
   h.note_sent(30)
-  @test.assert_eq(h.poll(30), HeartbeatAction::Nothing)
-  @test.assert_eq(h.poll(59), HeartbeatAction::Nothing)
-  @test.assert_eq(h.poll(60), HeartbeatAction::Send)
+  @test.assert_eq(h.poll(30), @connection.HeartbeatAction::Nothing)
+  @test.assert_eq(h.poll(59), @connection.HeartbeatAction::Nothing)
+  @test.assert_eq(h.poll(60), @connection.HeartbeatAction::Send)
 }
 
 ///|
@@ -42,44 +42,44 @@ test "sending any frame resets the send clock" {
 /// is dead (§4.2.7). Receiving is the only thing that revives it,
 /// restarting the timeout clock.
 test "two intervals without a frame times the connection out" {
-  let h = Heartbeat::new((60).to_uint16(), 0)
+  let h = @connection.Heartbeat::new((60).to_uint16(), 0)
   // Keep the send clock quiet so the receive clock alone decides.
   h.note_sent(90)
-  @test.assert_eq(h.poll(119), HeartbeatAction::Nothing)
-  @test.assert_eq(h.poll(120), HeartbeatAction::TimedOut)
+  @test.assert_eq(h.poll(119), @connection.HeartbeatAction::Nothing)
+  @test.assert_eq(h.poll(120), @connection.HeartbeatAction::TimedOut)
   // A late frame revives the connection.
   h.note_received(121)
   h.note_sent(212)
-  @test.assert_eq(h.poll(240), HeartbeatAction::Nothing)
-  @test.assert_eq(h.poll(241), HeartbeatAction::TimedOut)
+  @test.assert_eq(h.poll(240), @connection.HeartbeatAction::Nothing)
+  @test.assert_eq(h.poll(241), @connection.HeartbeatAction::TimedOut)
 }
 
 ///|
 /// Frames received do not count as frames sent: the send clock keeps
 /// running even while the peer chatters.
 test "receiving does not reset the send clock" {
-  let h = Heartbeat::new((60).to_uint16(), 0)
+  let h = @connection.Heartbeat::new((60).to_uint16(), 0)
   h.note_received(10)
   h.note_received(20)
-  @test.assert_eq(h.poll(29), HeartbeatAction::Nothing)
-  @test.assert_eq(h.poll(30), HeartbeatAction::Send)
+  @test.assert_eq(h.poll(29), @connection.HeartbeatAction::Nothing)
+  @test.assert_eq(h.poll(30), @connection.HeartbeatAction::Send)
 }
 
 ///|
 /// Timeout wins over sending: a connection whose peer went silent is
 /// dead, and no heartbeat can save it.
 test "timeout takes priority over sending" {
-  let h = Heartbeat::new((60).to_uint16(), 0)
-  @test.assert_eq(h.poll(1000), HeartbeatAction::TimedOut)
+  let h = @connection.Heartbeat::new((60).to_uint16(), 0)
+  @test.assert_eq(h.poll(1000), @connection.HeartbeatAction::TimedOut)
 }
 
 ///|
 /// An interval of 0 disables heartbeats entirely: nothing is ever
 /// due and the connection never times out.
 test "zero interval disables heartbeats" {
-  let h = Heartbeat::new((0).to_uint16(), 0)
-  @test.assert_eq(h.poll(1), HeartbeatAction::Nothing)
-  @test.assert_eq(h.poll(1000000), HeartbeatAction::Nothing)
+  let h = @connection.Heartbeat::new((0).to_uint16(), 0)
+  @test.assert_eq(h.poll(1), @connection.HeartbeatAction::Nothing)
+  @test.assert_eq(h.poll(1000000), @connection.HeartbeatAction::Nothing)
   @test.assert_eq(h.interval(), (0).to_uint16())
 }
 
@@ -87,11 +87,11 @@ test "zero interval disables heartbeats" {
 /// A 1-second interval sends on every poll (half an interval rounds
 /// down to 0) and times out after two seconds.
 test "tiny intervals send eagerly" {
-  let h = Heartbeat::new((1).to_uint16(), 0)
-  @test.assert_eq(h.poll(0), HeartbeatAction::Send)
+  let h = @connection.Heartbeat::new((1).to_uint16(), 0)
+  @test.assert_eq(h.poll(0), @connection.HeartbeatAction::Send)
   h.note_sent(0)
-  @test.assert_eq(h.poll(1), HeartbeatAction::Send)
-  @test.assert_eq(h.poll(2), HeartbeatAction::TimedOut)
+  @test.assert_eq(h.poll(1), @connection.HeartbeatAction::Send)
+  @test.assert_eq(h.poll(2), @connection.HeartbeatAction::TimedOut)
 }
 
 ///|
@@ -99,22 +99,22 @@ test "tiny intervals send eagerly" {
 /// deliberately closed connection is never reported dead. A closed
 /// connection's heartbeat responsibilities do not linger.
 test "stop silences the heartbeat forever" {
-  let h = Heartbeat::new((60).to_uint16(), 0)
+  let h = @connection.Heartbeat::new((60).to_uint16(), 0)
   h.stop()
   @test.assert_eq(h.stopped(), true)
-  @test.assert_eq(h.poll(1000), HeartbeatAction::Nothing)
+  @test.assert_eq(h.poll(1000), @connection.HeartbeatAction::Nothing)
   h.note_received(1000)
   h.note_sent(1000)
-  @test.assert_eq(h.poll(100000), HeartbeatAction::Nothing)
+  @test.assert_eq(h.poll(100000), @connection.HeartbeatAction::Nothing)
 }
 
 ///|
 /// A late frame revives a connection that timed out.
 test "a late frame revives a timed-out connection" {
-  let h = Heartbeat::new((60).to_uint16(), 0)
-  @test.assert_eq(h.poll(120), HeartbeatAction::TimedOut)
+  let h = @connection.Heartbeat::new((60).to_uint16(), 0)
+  @test.assert_eq(h.poll(120), @connection.HeartbeatAction::TimedOut)
   h.note_received(120)
   h.note_sent(120)
-  @test.assert_eq(h.poll(120), HeartbeatAction::Nothing)
-  @test.assert_eq(h.poll(150), HeartbeatAction::Send)
+  @test.assert_eq(h.poll(120), @connection.HeartbeatAction::Nothing)
+  @test.assert_eq(h.poll(150), @connection.HeartbeatAction::Send)
 }

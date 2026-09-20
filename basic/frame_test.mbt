@@ -18,7 +18,7 @@
 /// frames (§4.2.6) — and each payload dispatches back to its typed
 /// value.
 test "publish travels through frames" {
-  let publish = BasicMethod::BasicPublish(BasicPublish::{
+  let publish = @basic.BasicMethod::@basic.BasicPublish(@basic.BasicPublish::{
     reserved_1: (0).to_uint16(),
     exchange: "logs",
     routing_key: "info",
@@ -27,9 +27,9 @@ test "publish travels through frames" {
   })
   let method_payload = @codec.Writer::new()
   publish.encode(method_payload)
-  let header = ContentHeader::{
+  let header = @basic.ContentHeader::{
     body_size: (5).to_uint64(),
-    properties: BasicProperties::{
+    properties: @basic.BasicProperties::{
       content_type: Some("text/plain"),
       content_encoding: None,
       headers: None,

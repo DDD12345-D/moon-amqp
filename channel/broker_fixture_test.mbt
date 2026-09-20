@@ -20,12 +20,16 @@
 /// our decoder. Recorded 2026-09-18.
 test "broker fixture: client topology bytes" {
   @test.assert_eq(
-    chan_enc(ChannelMethod::ChannelOpen(ChannelOpen::{ reserved_1: "", })),
+    chan_enc(
+      @channel.ChannelMethod::@channel.ChannelOpen(@channel.ChannelOpen::{
+        reserved_1: "",
+      }),
+    ),
     b"\x00\x14\x00\x0a\x00",
   )
   @test.assert_eq(
     exch_enc(
-      ChannelMethod::ExchangeDeclare(ExchangeDeclare::{
+      @channel.ChannelMethod::@channel.ExchangeDeclare(@channel.ExchangeDeclare::{
         reserved_1: (0).to_uint16(),
         exchange: "logs",
         exchange_type: "fanout",
@@ -41,7 +45,7 @@ test "broker fixture: client topology bytes" {
   )
   @test.assert_eq(
     queue_enc(
-      ChannelMethod::QueueDeclare(QueueDeclare::{
+      @channel.ChannelMethod::@channel.QueueDeclare(@channel.QueueDeclare::{
         reserved_1: (0).to_uint16(),
         queue: "jobs",
         passive: false,
@@ -56,7 +60,7 @@ test "broker fixture: client topology bytes" {
   )
   @test.assert_eq(
     queue_enc(
-      ChannelMethod::QueueBind(QueueBind::{
+      @channel.ChannelMethod::@channel.QueueBind(@channel.QueueBind::{
         reserved_1: (0).to_uint16(),
         queue: "jobs",
         exchange: "logs",
@@ -69,7 +73,7 @@ test "broker fixture: client topology bytes" {
   )
   @test.assert_eq(
     queue_enc(
-      ChannelMethod::QueuePurge(QueuePurge::{
+      @channel.ChannelMethod::@channel.QueuePurge(@channel.QueuePurge::{
         reserved_1: (0).to_uint16(),
         queue: "jobs",
         no_wait: false,
@@ -79,7 +83,7 @@ test "broker fixture: client topology bytes" {
   )
   @test.assert_eq(
     queue_enc(
-      ChannelMethod::QueueDelete(QueueDelete::{
+      @channel.ChannelMethod::@channel.QueueDelete(@channel.QueueDelete::{
         reserved_1: (0).to_uint16(),
         queue: "jobs",
         if_unused: false,
@@ -91,7 +95,7 @@ test "broker fixture: client topology bytes" {
   )
   @test.assert_eq(
     exch_enc(
-      ChannelMethod::ExchangeDelete(ExchangeDelete::{
+      @channel.ChannelMethod::@channel.ExchangeDelete(@channel.ExchangeDelete::{
         reserved_1: (0).to_uint16(),
         exchange: "logs",
         if_unused: false,
@@ -108,31 +112,40 @@ test "broker fixture: client topology bytes" {
 test "broker fixture: server reply bytes" {
   @test.assert_eq(
     chan_dec(b"\x00\x14\x00\x0b\x00\x00\x00\x00"),
-    ChannelMethod::ChannelOpenOk(ChannelOpenOk::{ reserved_1: "", }),
+    @channel.ChannelMethod::@channel.ChannelOpenOk(@channel.ChannelOpenOk::{
+      reserved_1: "",
+    }),
   )
   @test.assert_eq(
     exch_dec(b"\x00\x28\x00\x0b"),
-    ChannelMethod::ExchangeDeclareOk,
+    @channel.ChannelMethod::ExchangeDeclareOk,
   )
   @test.assert_eq(
     queue_dec(b"\x00\x32\x00\x0b\x04jobs\x00\x00\x00\x00\x00\x00\x00\x00"),
-    ChannelMethod::QueueDeclareOk(QueueDeclareOk::{
+    @channel.ChannelMethod::@channel.QueueDeclareOk(@channel.QueueDeclareOk::{
       queue: "jobs",
       message_count: 0,
       consumer_count: 0,
     }),
   )
-  @test.assert_eq(queue_dec(b"\x00\x32\x00\x15"), ChannelMethod::QueueBindOk)
+  @test.assert_eq(
+    queue_dec(b"\x00\x32\x00\x15"),
+    @channel.ChannelMethod::QueueBindOk,
+  )
   @test.assert_eq(
     queue_dec(b"\x00\x32\x00\x1f\x00\x00\x00\x00"),
-    ChannelMethod::QueuePurgeOk(QueuePurgeOk::{ message_count: 0, }),
+    @channel.ChannelMethod::@channel.QueuePurgeOk(@channel.QueuePurgeOk::{
+      message_count: 0,
+    }),
   )
   @test.assert_eq(
     queue_dec(b"\x00\x32\x00\x29\x00\x00\x00\x00"),
-    ChannelMethod::QueueDeleteOk(QueueDeleteOk::{ message_count: 0, }),
+    @channel.ChannelMethod::@channel.QueueDeleteOk(@channel.QueueDeleteOk::{
+      message_count: 0,
+    }),
   )
   @test.assert_eq(
     exch_dec(b"\x00\x28\x00\x15"),
-    ChannelMethod::ExchangeDeleteOk,
+    @channel.ChannelMethod::ExchangeDeleteOk,
   )
 }

@@ -25,7 +25,7 @@ test "basic consume methods golden encode" {
   // basic.qos: prefetch-size 0, prefetch-count 2, global off.
   @test.assert_eq(
     basic_enc(
-      BasicMethod::BasicQos(BasicQos::{
+      @basic.BasicMethod::@basic.BasicQos(@basic.BasicQos::{
         prefetch_size: (0).reinterpret_as_uint(),
         prefetch_count: (2).to_uint16(),
         global: false,
@@ -36,7 +36,7 @@ test "basic consume methods golden encode" {
   // basic.qos with global.
   @test.assert_eq(
     basic_enc(
-      BasicMethod::BasicQos(BasicQos::{
+      @basic.BasicMethod::@basic.BasicQos(@basic.BasicQos::{
         prefetch_size: (0).reinterpret_as_uint(),
         prefetch_count: (0).to_uint16(),
         global: true,
@@ -45,11 +45,14 @@ test "basic consume methods golden encode" {
     b"\x00\x3c\x00\x0a\x00\x00\x00\x00\x00\x00\x01",
   )
   // basic.qos-ok: no arguments.
-  @test.assert_eq(basic_enc(BasicMethod::BasicQosOk(())), b"\x00\x3c\x00\x0b")
+  @test.assert_eq(
+    basic_enc(@basic.BasicMethod::BasicQosOk(())),
+    b"\x00\x3c\x00\x0b",
+  )
   // basic.consume: empty tag, no flags, empty arguments table.
   @test.assert_eq(
     basic_enc(
-      BasicMethod::BasicConsume(BasicConsume::{
+      @basic.BasicMethod::@basic.BasicConsume(@basic.BasicConsume::{
         reserved_1: (0).to_uint16(),
         queue: "consume-q",
         consumer_tag: "",
@@ -68,7 +71,7 @@ test "basic consume methods golden encode" {
   args.set("x-priority", @table.FieldValue::I32(5))
   @test.assert_eq(
     basic_enc(
-      BasicMethod::BasicConsume(BasicConsume::{
+      @basic.BasicMethod::@basic.BasicConsume(@basic.BasicConsume::{
         reserved_1: (0).to_uint16(),
         queue: "consume-q",
         consumer_tag: "ctag1",
@@ -84,7 +87,7 @@ test "basic consume methods golden encode" {
   // basic.consume-ok.
   @test.assert_eq(
     basic_enc(
-      BasicMethod::BasicConsumeOk(BasicConsumeOk::{
+      @basic.BasicMethod::@basic.BasicConsumeOk(@basic.BasicConsumeOk::{
         consumer_tag: consume_ctag,
       }),
     ),
@@ -93,7 +96,7 @@ test "basic consume methods golden encode" {
   // basic.cancel.
   @test.assert_eq(
     basic_enc(
-      BasicMethod::BasicCancel(BasicCancel::{
+      @basic.BasicMethod::@basic.BasicCancel(@basic.BasicCancel::{
         consumer_tag: consume_ctag,
         nowait: false,
       }),
@@ -103,21 +106,26 @@ test "basic consume methods golden encode" {
   // basic.cancel with nowait.
   @test.assert_eq(
     basic_enc(
-      BasicMethod::BasicCancel(BasicCancel::{ consumer_tag: "c", nowait: true, }),
+      @basic.BasicMethod::@basic.BasicCancel(@basic.BasicCancel::{
+        consumer_tag: "c",
+        nowait: true,
+      }),
     ),
     b"\x00\x3c\x00\x1e\x01c\x01",
   )
   // basic.cancel-ok.
   @test.assert_eq(
     basic_enc(
-      BasicMethod::BasicCancelOk(BasicCancelOk::{ consumer_tag: consume_ctag, }),
+      @basic.BasicMethod::@basic.BasicCancelOk(@basic.BasicCancelOk::{
+        consumer_tag: consume_ctag,
+      }),
     ),
     b"\x00\x3c\x00\x1f\x1famq.ctag-hIvI1ZQNT97KFUbcdj8CSQ",
   )
   // basic.deliver: tag 1, not redelivered, default exchange.
   @test.assert_eq(
     basic_enc(
-      BasicMethod::BasicDeliver(BasicDeliver::{
+      @basic.BasicMethod::@basic.BasicDeliver(@basic.BasicDeliver::{
         consumer_tag: consume_ctag,
         delivery_tag: (1).to_uint64(),
         redelivered: false,
@@ -130,7 +138,7 @@ test "basic consume methods golden encode" {
   // basic.deliver: tag 4, redelivered.
   @test.assert_eq(
     basic_enc(
-      BasicMethod::BasicDeliver(BasicDeliver::{
+      @basic.BasicMethod::@basic.BasicDeliver(@basic.BasicDeliver::{
         consumer_tag: consume_ctag,
         delivery_tag: (4).to_uint64(),
         redelivered: true,
@@ -143,7 +151,7 @@ test "basic consume methods golden encode" {
   // basic.get.
   @test.assert_eq(
     basic_enc(
-      BasicMethod::BasicGet(BasicGet::{
+      @basic.BasicMethod::@basic.BasicGet(@basic.BasicGet::{
         reserved_1: (0).to_uint16(),
         queue: "consume-q",
         no_ack: false,
@@ -154,7 +162,7 @@ test "basic consume methods golden encode" {
   // basic.get with no-ack.
   @test.assert_eq(
     basic_enc(
-      BasicMethod::BasicGet(BasicGet::{
+      @basic.BasicMethod::@basic.BasicGet(@basic.BasicGet::{
         reserved_1: (0).to_uint16(),
         queue: "consume-q",
         no_ack: true,
@@ -165,7 +173,7 @@ test "basic consume methods golden encode" {
   // basic.get-ok: delivery-tag 9, message-count 3.
   @test.assert_eq(
     basic_enc(
-      BasicMethod::BasicGetOk(BasicGetOk::{
+      @basic.BasicMethod::@basic.BasicGetOk(@basic.BasicGetOk::{
         delivery_tag: (9).to_uint64(),
         redelivered: false,
         exchange: "",
@@ -177,13 +185,17 @@ test "basic consume methods golden encode" {
   )
   // basic.get-empty: the reserved short string is empty.
   @test.assert_eq(
-    basic_enc(BasicMethod::BasicGetEmpty(BasicGetEmpty::{ cluster_id: "", })),
+    basic_enc(
+      @basic.BasicMethod::@basic.BasicGetEmpty(@basic.BasicGetEmpty::{
+        cluster_id: "",
+      }),
+    ),
     b"\x00\x3c\x00\x48\x00",
   )
   // basic.ack.
   @test.assert_eq(
     basic_enc(
-      BasicMethod::BasicAck(BasicAck::{
+      @basic.BasicMethod::@basic.BasicAck(@basic.BasicAck::{
         delivery_tag: (1).to_uint64(),
         multiple: false,
       }),
@@ -193,7 +205,7 @@ test "basic consume methods golden encode" {
   // basic.ack with multiple.
   @test.assert_eq(
     basic_enc(
-      BasicMethod::BasicAck(BasicAck::{
+      @basic.BasicMethod::@basic.BasicAck(@basic.BasicAck::{
         delivery_tag: (2).to_uint64(),
         multiple: true,
       }),
@@ -203,7 +215,7 @@ test "basic consume methods golden encode" {
   // basic.reject without requeue.
   @test.assert_eq(
     basic_enc(
-      BasicMethod::BasicReject(BasicReject::{
+      @basic.BasicMethod::@basic.BasicReject(@basic.BasicReject::{
         delivery_tag: (3).to_uint64(),
         requeue: false,
       }),
@@ -213,7 +225,7 @@ test "basic consume methods golden encode" {
   // basic.reject with requeue.
   @test.assert_eq(
     basic_enc(
-      BasicMethod::BasicReject(BasicReject::{
+      @basic.BasicMethod::@basic.BasicReject(@basic.BasicReject::{
         delivery_tag: (3).to_uint64(),
         requeue: true,
       }),
@@ -223,29 +235,39 @@ test "basic consume methods golden encode" {
   // basic.recover-async with requeue.
   @test.assert_eq(
     basic_enc(
-      BasicMethod::BasicRecoverAsync(BasicRecoverAsync::{ requeue: true, }),
+      @basic.BasicMethod::@basic.BasicRecoverAsync(@basic.BasicRecoverAsync::{
+        requeue: true,
+      }),
     ),
     b"\x00\x3c\x00\x64\x01",
   )
   // basic.recover without requeue.
   @test.assert_eq(
-    basic_enc(BasicMethod::BasicRecover(BasicRecover::{ requeue: false, })),
+    basic_enc(
+      @basic.BasicMethod::@basic.BasicRecover(@basic.BasicRecover::{
+        requeue: false,
+      }),
+    ),
     b"\x00\x3c\x00\x6e\x00",
   )
   // basic.recover with requeue.
   @test.assert_eq(
-    basic_enc(BasicMethod::BasicRecover(BasicRecover::{ requeue: true, })),
+    basic_enc(
+      @basic.BasicMethod::@basic.BasicRecover(@basic.BasicRecover::{
+        requeue: true,
+      }),
+    ),
     b"\x00\x3c\x00\x6e\x01",
   )
   // basic.recover-ok: no arguments.
   @test.assert_eq(
-    basic_enc(BasicMethod::BasicRecoverOk(())),
+    basic_enc(@basic.BasicMethod::BasicRecoverOk(())),
     b"\x00\x3c\x00\x6f",
   )
   // basic.nack: multiple off, requeue on (bits 0x02).
   @test.assert_eq(
     basic_enc(
-      BasicMethod::BasicNack(BasicNack::{
+      @basic.BasicMethod::@basic.BasicNack(@basic.BasicNack::{
         delivery_tag: (2).to_uint64(),
         multiple: false,
         requeue: true,
@@ -256,7 +278,7 @@ test "basic consume methods golden encode" {
   // basic.nack: multiple on, requeue off (bits 0x01).
   @test.assert_eq(
     basic_enc(
-      BasicMethod::BasicNack(BasicNack::{
+      @basic.BasicMethod::@basic.BasicNack(@basic.BasicNack::{
         delivery_tag: (3).to_uint64(),
         multiple: true,
         requeue: false,
@@ -270,16 +292,21 @@ test "basic consume methods golden encode" {
 /// Golden decode: the server-bound vectors read back to their
 /// values.
 test "basic consume methods golden decode" {
-  @test.assert_eq(basic_dec(b"\x00\x3c\x00\x0b"), BasicMethod::BasicQosOk(()))
+  @test.assert_eq(
+    basic_dec(b"\x00\x3c\x00\x0b"),
+    @basic.BasicMethod::BasicQosOk(()),
+  )
   @test.assert_eq(
     basic_dec(b"\x00\x3c\x00\x15\x1famq.ctag-hIvI1ZQNT97KFUbcdj8CSQ"),
-    BasicMethod::BasicConsumeOk(BasicConsumeOk::{ consumer_tag: consume_ctag, }),
+    @basic.BasicMethod::@basic.BasicConsumeOk(@basic.BasicConsumeOk::{
+      consumer_tag: consume_ctag,
+    }),
   )
   @test.assert_eq(
     basic_dec(
       b"\x00\x3c\x00\x3c\x1famq.ctag-hIvI1ZQNT97KFUbcdj8CSQ\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x09consume-q",
     ),
-    BasicMethod::BasicDeliver(BasicDeliver::{
+    @basic.BasicMethod::@basic.BasicDeliver(@basic.BasicDeliver::{
       consumer_tag: consume_ctag,
       delivery_tag: (1).to_uint64(),
       redelivered: false,
@@ -291,7 +318,7 @@ test "basic consume methods golden decode" {
     basic_dec(
       b"\x00\x3c\x00\x3c\x1famq.ctag-hIvI1ZQNT97KFUbcdj8CSQ\x00\x00\x00\x00\x00\x00\x00\x04\x01\x00\x09consume-q",
     ),
-    BasicMethod::BasicDeliver(BasicDeliver::{
+    @basic.BasicMethod::@basic.BasicDeliver(@basic.BasicDeliver::{
       consumer_tag: consume_ctag,
       delivery_tag: (4).to_uint64(),
       redelivered: true,
@@ -301,11 +328,15 @@ test "basic consume methods golden decode" {
   )
   @test.assert_eq(
     basic_dec(b"\x00\x3c\x00\x48\x00"),
-    BasicMethod::BasicGetEmpty(BasicGetEmpty::{ cluster_id: "", }),
+    @basic.BasicMethod::@basic.BasicGetEmpty(@basic.BasicGetEmpty::{
+      cluster_id: "",
+    }),
   )
   @test.assert_eq(
     basic_dec(b"\x00\x3c\x00\x1f\x1famq.ctag-hIvI1ZQNT97KFUbcdj8CSQ"),
-    BasicMethod::BasicCancelOk(BasicCancelOk::{ consumer_tag: consume_ctag, }),
+    @basic.BasicMethod::@basic.BasicCancelOk(@basic.BasicCancelOk::{
+      consumer_tag: consume_ctag,
+    }),
   )
 }
 
@@ -315,13 +346,13 @@ test "basic consume methods golden decode" {
 test "basic consume methods roundtrip" {
   let args = @table.FieldTable::new()
   args.set("x-priority", @table.FieldValue::I32(5))
-  let values : Array[BasicMethod] = [
-    BasicMethod::BasicQos(BasicQos::{
+  let values : Array[@basic.BasicMethod] = [
+    @basic.BasicMethod::@basic.BasicQos(@basic.BasicQos::{
       prefetch_size: (0).reinterpret_as_uint(),
       prefetch_count: (7).to_uint16(),
       global: true,
     }),
-    BasicMethod::BasicConsume(BasicConsume::{
+    @basic.BasicMethod::@basic.BasicConsume(@basic.BasicConsume::{
       reserved_1: (0).to_uint16(),
       queue: "consume-q",
       consumer_tag: "ctag1",
@@ -331,44 +362,54 @@ test "basic consume methods roundtrip" {
       nowait: true,
       arguments: args,
     }),
-    BasicMethod::BasicConsumeOk(BasicConsumeOk::{ consumer_tag: "ctag1", }),
-    BasicMethod::BasicCancel(BasicCancel::{
+    @basic.BasicMethod::@basic.BasicConsumeOk(@basic.BasicConsumeOk::{
+      consumer_tag: "ctag1",
+    }),
+    @basic.BasicMethod::@basic.BasicCancel(@basic.BasicCancel::{
       consumer_tag: "ctag1",
       nowait: true,
     }),
-    BasicMethod::BasicCancelOk(BasicCancelOk::{ consumer_tag: "ctag1", }),
-    BasicMethod::BasicDeliver(BasicDeliver::{
+    @basic.BasicMethod::@basic.BasicCancelOk(@basic.BasicCancelOk::{
+      consumer_tag: "ctag1",
+    }),
+    @basic.BasicMethod::@basic.BasicDeliver(@basic.BasicDeliver::{
       consumer_tag: "ctag1",
       delivery_tag: (42).to_uint64(),
       redelivered: true,
       exchange: "logs",
       routing_key: "info",
     }),
-    BasicMethod::BasicGet(BasicGet::{
+    @basic.BasicMethod::@basic.BasicGet(@basic.BasicGet::{
       reserved_1: (0).to_uint16(),
       queue: "consume-q",
       no_ack: true,
     }),
-    BasicMethod::BasicGetOk(BasicGetOk::{
+    @basic.BasicMethod::@basic.BasicGetOk(@basic.BasicGetOk::{
       delivery_tag: (42).to_uint64(),
       redelivered: false,
       exchange: "logs",
       routing_key: "info",
       message_count: (3).reinterpret_as_uint(),
     }),
-    BasicMethod::BasicGetEmpty(BasicGetEmpty::{ cluster_id: "", }),
-    BasicMethod::BasicAck(BasicAck::{
+    @basic.BasicMethod::@basic.BasicGetEmpty(@basic.BasicGetEmpty::{
+      cluster_id: "",
+    }),
+    @basic.BasicMethod::@basic.BasicAck(@basic.BasicAck::{
       delivery_tag: (42).to_uint64(),
       multiple: true,
     }),
-    BasicMethod::BasicReject(BasicReject::{
+    @basic.BasicMethod::@basic.BasicReject(@basic.BasicReject::{
       delivery_tag: (42).to_uint64(),
       requeue: true,
     }),
-    BasicMethod::BasicRecoverAsync(BasicRecoverAsync::{ requeue: false, }),
-    BasicMethod::BasicRecover(BasicRecover::{ requeue: true, }),
-    BasicMethod::BasicRecoverOk(()),
-    BasicMethod::BasicNack(BasicNack::{
+    @basic.BasicMethod::@basic.BasicRecoverAsync(@basic.BasicRecoverAsync::{
+      requeue: false,
+    }),
+    @basic.BasicMethod::@basic.BasicRecover(@basic.BasicRecover::{
+      requeue: true,
+    }),
+    @basic.BasicMethod::BasicRecoverOk(()),
+    @basic.BasicMethod::@basic.BasicNack(@basic.BasicNack::{
       delivery_tag: (42).to_uint64(),
       multiple: true,
       requeue: true,
@@ -384,7 +425,7 @@ test "basic consume methods roundtrip" {
 test "basic.consume reserved-1 must be zero" {
   let raised = try {
     let _ = basic_enc(
-      BasicMethod::BasicConsume(BasicConsume::{
+      @basic.BasicMethod::@basic.BasicConsume(@basic.BasicConsume::{
         reserved_1: (1).to_uint16(),
         queue: "q",
         consumer_tag: "",
@@ -397,7 +438,7 @@ test "basic.consume reserved-1 must be zero" {
     )
     false
   } catch {
-    BasicError::ValueOutOfRange(_) => true
+    @basic.BasicError::ValueOutOfRange(_) => true
     _ => false
   }
   @test.assert_eq(raised, true)
@@ -408,7 +449,7 @@ test "basic.consume reserved-1 must be zero" {
 test "basic.get reserved-1 must be zero" {
   let raised = try {
     let _ = basic_enc(
-      BasicMethod::BasicGet(BasicGet::{
+      @basic.BasicMethod::@basic.BasicGet(@basic.BasicGet::{
         reserved_1: (1).to_uint16(),
         queue: "q",
         no_ack: false,
@@ -416,7 +457,7 @@ test "basic.get reserved-1 must be zero" {
     )
     false
   } catch {
-    BasicError::ValueOutOfRange(_) => true
+    @basic.BasicError::ValueOutOfRange(_) => true
     _ => false
   }
   @test.assert_eq(raised, true)
@@ -428,11 +469,13 @@ test "basic.get reserved-1 must be zero" {
 test "basic.get-empty cluster-id must be empty" {
   let raised = try {
     let _ = basic_enc(
-      BasicMethod::BasicGetEmpty(BasicGetEmpty::{ cluster_id: "x", }),
+      @basic.BasicMethod::@basic.BasicGetEmpty(@basic.BasicGetEmpty::{
+        cluster_id: "x",
+      }),
     )
     false
   } catch {
-    BasicError::ValueOutOfRange(_) => true
+    @basic.BasicError::ValueOutOfRange(_) => true
     _ => false
   }
   @test.assert_eq(raised, true)
@@ -445,7 +488,7 @@ test "truncated qos raises" {
     let _ = basic_dec(b"\x00\x3c\x00\x0a\x00\x00\x00")
     false
   } catch {
-    BasicError::Truncated => true
+    @basic.BasicError::Truncated => true
     _ => false
   }
   @test.assert_eq(raised, true)
@@ -458,7 +501,7 @@ test "truncated deliver raises" {
     let _ = basic_dec(b"\x00\x3c\x00\x3c\x01a")
     false
   } catch {
-    BasicError::Truncated => true
+    @basic.BasicError::Truncated => true
     _ => false
   }
   @test.assert_eq(raised, true)
@@ -471,7 +514,7 @@ test "invalid utf-8 in cancel raises" {
     let _ = basic_dec(b"\x00\x3c\x00\x1e\x01\xff")
     false
   } catch {
-    BasicError::InvalidUtf8 => true
+    @basic.BasicError::InvalidUtf8 => true
     _ => false
   }
   @test.assert_eq(raised, true)

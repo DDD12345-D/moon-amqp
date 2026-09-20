@@ -14,7 +14,7 @@
 
 ///|
 /// Encode one basic-class method to its payload bytes.
-fn basic_enc(m : BasicMethod) -> Bytes raise BasicError {
+fn basic_enc(m : @basic.BasicMethod) -> Bytes raise @basic.BasicError {
   let w = @codec.Writer::new()
   m.encode(w)
   w.to_bytes()
@@ -28,7 +28,7 @@ fn basic_enc(m : BasicMethod) -> Bytes raise BasicError {
 test "basic methods golden encode" {
   @test.assert_eq(
     basic_enc(
-      BasicMethod::BasicPublish(BasicPublish::{
+      @basic.BasicMethod::@basic.BasicPublish(@basic.BasicPublish::{
         reserved_1: (0).to_uint16(),
         exchange: "logs",
         routing_key: "info",
@@ -40,7 +40,7 @@ test "basic methods golden encode" {
   )
   @test.assert_eq(
     basic_enc(
-      BasicMethod::BasicPublish(BasicPublish::{
+      @basic.BasicMethod::@basic.BasicPublish(@basic.BasicPublish::{
         reserved_1: (0).to_uint16(),
         exchange: "logs",
         routing_key: "info",
@@ -52,7 +52,7 @@ test "basic methods golden encode" {
   )
   @test.assert_eq(
     basic_enc(
-      BasicMethod::BasicPublish(BasicPublish::{
+      @basic.BasicMethod::@basic.BasicPublish(@basic.BasicPublish::{
         reserved_1: (0).to_uint16(),
         exchange: "",
         routing_key: "jobs",
@@ -64,7 +64,7 @@ test "basic methods golden encode" {
   )
   @test.assert_eq(
     basic_enc(
-      BasicMethod::BasicReturn(BasicReturn::{
+      @basic.BasicMethod::@basic.BasicReturn(@basic.BasicReturn::{
         reply_code: (312).to_uint16(),
         reply_text: "NO_ROUTE",
         exchange: "logs",
@@ -80,7 +80,7 @@ test "basic methods golden encode" {
 test "basic.publish reserved-1 must be zero" {
   let raised = try {
     let _ = basic_enc(
-      BasicMethod::BasicPublish(BasicPublish::{
+      @basic.BasicMethod::@basic.BasicPublish(@basic.BasicPublish::{
         reserved_1: (1).to_uint16(),
         exchange: "e",
         routing_key: "k",
@@ -90,7 +90,7 @@ test "basic.publish reserved-1 must be zero" {
     )
     false
   } catch {
-    BasicError::ValueOutOfRange(_) => true
+    @basic.BasicError::ValueOutOfRange(_) => true
     _ => false
   }
   @test.assert_eq(raised, true)
@@ -102,7 +102,7 @@ test "basic.publish reserved-1 must be zero" {
 test "publish routing key over 255 bytes raises" {
   let raised = try {
     let _ = basic_enc(
-      BasicMethod::BasicPublish(BasicPublish::{
+      @basic.BasicMethod::@basic.BasicPublish(@basic.BasicPublish::{
         reserved_1: (0).to_uint16(),
         exchange: "",
         routing_key: "x".repeat(256),
@@ -112,7 +112,7 @@ test "publish routing key over 255 bytes raises" {
     )
     false
   } catch {
-    BasicError::ValueOutOfRange(_) => true
+    @basic.BasicError::ValueOutOfRange(_) => true
     _ => false
   }
   @test.assert_eq(raised, true)
@@ -120,8 +120,8 @@ test "publish routing key over 255 bytes raises" {
 
 ///|
 /// Decode one basic-class method payload.
-fn basic_dec(payload : Bytes) -> BasicMethod raise BasicError {
-  BasicMethod::decode(@codec.Reader::new(payload))
+fn basic_dec(payload : Bytes) -> @basic.BasicMethod raise @basic.BasicError {
+  @basic.BasicMethod::decode(@codec.Reader::new(payload))
 }
 
 ///|
@@ -129,7 +129,7 @@ fn basic_dec(payload : Bytes) -> BasicMethod raise BasicError {
 test "basic methods golden decode" {
   @test.assert_eq(
     basic_dec(b"\x00\x3c\x00\x28\x00\x00\x04logs\x04info\x01"),
-    BasicMethod::BasicPublish(BasicPublish::{
+    @basic.BasicMethod::@basic.BasicPublish(@basic.BasicPublish::{
       reserved_1: (0).to_uint16(),
       exchange: "logs",
       routing_key: "info",
@@ -139,7 +139,7 @@ test "basic methods golden decode" {
   )
   @test.assert_eq(
     basic_dec(b"\x00\x3c\x00\x28\x00\x00\x04logs\x04info\x02"),
-    BasicMethod::BasicPublish(BasicPublish::{
+    @basic.BasicMethod::@basic.BasicPublish(@basic.BasicPublish::{
       reserved_1: (0).to_uint16(),
       exchange: "logs",
       routing_key: "info",
@@ -149,7 +149,7 @@ test "basic methods golden decode" {
   )
   @test.assert_eq(
     basic_dec(b"\x00\x3c\x00\x28\x00\x00\x00\x04jobs\x00"),
-    BasicMethod::BasicPublish(BasicPublish::{
+    @basic.BasicMethod::@basic.BasicPublish(@basic.BasicPublish::{
       reserved_1: (0).to_uint16(),
       exchange: "",
       routing_key: "jobs",
@@ -159,7 +159,7 @@ test "basic methods golden decode" {
   )
   @test.assert_eq(
     basic_dec(b"\x00\x3c\x00\x32\x01\x38\x08NO_ROUTE\x04logs\x04info"),
-    BasicMethod::BasicReturn(BasicReturn::{
+    @basic.BasicMethod::@basic.BasicReturn(@basic.BasicReturn::{
       reply_code: (312).to_uint16(),
       reply_text: "NO_ROUTE",
       exchange: "logs",
@@ -173,14 +173,14 @@ test "basic methods golden decode" {
 test "basic methods roundtrip" {
   for
     m in [
-      BasicMethod::BasicPublish(BasicPublish::{
+      @basic.BasicMethod::@basic.BasicPublish(@basic.BasicPublish::{
         reserved_1: (0).to_uint16(),
         exchange: "logs",
         routing_key: "route.#",
         mandatory: true,
         immediate: true,
       }),
-      BasicMethod::BasicReturn(BasicReturn::{
+      @basic.BasicMethod::@basic.BasicReturn(@basic.BasicReturn::{
         reply_code: (312).to_uint16(),
         reply_text: "NO_ROUTE",
         exchange: "amq.topic",
@@ -200,7 +200,7 @@ test "unexpected class raises" {
     let _ = basic_dec(b"\x00\x14\x00\x0a\x00") // channel class
     None
   } catch {
-    BasicError::UnexpectedClass(c) => Some(c)
+    @basic.BasicError::UnexpectedClass(c) => Some(c)
     _ => None
   }
   @test.assert_eq(err, Some((20).to_uint16()))
@@ -213,7 +213,7 @@ test "unknown method raises" {
     let _ = basic_dec(b"\x00\x3c\x00\x63") // method 99
     None
   } catch {
-    BasicError::UnknownMethod(c, m) => Some((c, m))
+    @basic.BasicError::UnknownMethod(c, m) => Some((c, m))
     _ => None
   }
   @test.assert_eq(err, Some(((60).to_uint16(), (99).to_uint16())))
@@ -228,7 +228,7 @@ test "truncated input raises" {
       let _ = basic_dec(payload)
       false
     } catch {
-      BasicError::Truncated => true
+      @basic.BasicError::Truncated => true
       _ => false
     }
     @test.assert_eq(raised, true)
@@ -242,7 +242,7 @@ test "invalid utf-8 raises" {
     let _ = basic_dec(b"\x00\x3c\x00\x28\x00\x00\x02\xff\xfe")
     false
   } catch {
-    BasicError::InvalidUtf8 => true
+    @basic.BasicError::InvalidUtf8 => true
     _ => false
   }
   @test.assert_eq(raised, true)

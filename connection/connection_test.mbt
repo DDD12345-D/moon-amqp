@@ -14,7 +14,9 @@
 
 ///|
 /// Encode one method and return its payload bytes.
-fn enc(m : ConnectionMethod) -> Bytes raise ConnectionError {
+fn enc(
+  m : @connection.ConnectionMethod,
+) -> Bytes raise @connection.ConnectionError {
   let w = @codec.Writer::new()
   m.encode(w)
   w.to_bytes()
@@ -26,7 +28,7 @@ fn enc(m : ConnectionMethod) -> Bytes raise ConnectionError {
 test "connection method golden encode" {
   @test.assert_eq(
     enc(
-      ConnectionMethod::Start(Start::{
+      @connection.ConnectionMethod::@connection.Start(@connection.Start::{
         version_major: b'\x00',
         version_minor: b'\x09',
         server_properties: @table.FieldTable::new(),
@@ -38,7 +40,7 @@ test "connection method golden encode" {
   )
   @test.assert_eq(
     enc(
-      ConnectionMethod::StartOk(StartOk::{
+      @connection.ConnectionMethod::@connection.StartOk(@connection.StartOk::{
         client_properties: @table.FieldTable::new(),
         mechanism: "PLAIN",
         response: "guest",
@@ -49,7 +51,7 @@ test "connection method golden encode" {
   )
   @test.assert_eq(
     enc(
-      ConnectionMethod::Tune(Tune::{
+      @connection.ConnectionMethod::@connection.Tune(@connection.Tune::{
         channel_max: (2047).to_uint16(),
         frame_max: 131072,
         heartbeat: (60).to_uint16(),
@@ -59,7 +61,7 @@ test "connection method golden encode" {
   )
   @test.assert_eq(
     enc(
-      ConnectionMethod::TuneOk(TuneOk::{
+      @connection.ConnectionMethod::@connection.TuneOk(@connection.TuneOk::{
         channel_max: (2047).to_uint16(),
         frame_max: 131072,
         heartbeat: (60).to_uint16(),
@@ -69,7 +71,7 @@ test "connection method golden encode" {
   )
   @test.assert_eq(
     enc(
-      ConnectionMethod::Open(Open::{
+      @connection.ConnectionMethod::@connection.Open(@connection.Open::{
         virtual_host: "/",
         reserved_1: "",
         reserved_2: false,
@@ -78,12 +80,16 @@ test "connection method golden encode" {
     b"\x00\x0a\x00\x28\x01/\x00\x00",
   )
   @test.assert_eq(
-    enc(ConnectionMethod::OpenOk(OpenOk::{ reserved_1: "", })),
+    enc(
+      @connection.ConnectionMethod::@connection.OpenOk(@connection.OpenOk::{
+        reserved_1: "",
+      }),
+    ),
     b"\x00\x0a\x00\x29\x00",
   )
   @test.assert_eq(
     enc(
-      ConnectionMethod::Close(Close::{
+      @connection.ConnectionMethod::@connection.Close(@connection.Close::{
         reply_code: (200).to_uint16(),
         reply_text: "Goodbye",
         class_id: (0).to_uint16(),
@@ -92,7 +98,10 @@ test "connection method golden encode" {
     ),
     b"\x00\x0a\x00\x32\x00\xc8\x07Goodbye\x00\x00\x00\x00",
   )
-  @test.assert_eq(enc(ConnectionMethod::CloseOk(())), b"\x00\x0a\x00\x33")
+  @test.assert_eq(
+    enc(@connection.ConnectionMethod::CloseOk(())),
+    b"\x00\x0a\x00\x33",
+  )
 }
 
 ///|
@@ -104,7 +113,7 @@ test "start with server properties golden" {
   props.set("version", @table.FieldValue::LongStr("4.3.6"))
   @test.assert_eq(
     enc(
-      ConnectionMethod::Start(Start::{
+      @connection.ConnectionMethod::@connection.Start(@connection.Start::{
         version_major: b'\x00',
         version_minor: b'\x09',
         server_properties: props,
@@ -122,23 +131,25 @@ test "start with server properties golden" {
 test "reserved fields raise" {
   for
     bad in [
-      ConnectionMethod::Open(Open::{
+      @connection.ConnectionMethod::@connection.Open(@connection.Open::{
         virtual_host: "/",
         reserved_1: "x",
         reserved_2: false,
       }),
-      ConnectionMethod::Open(Open::{
+      @connection.ConnectionMethod::@connection.Open(@connection.Open::{
         virtual_host: "/",
         reserved_1: "",
         reserved_2: true,
       }),
-      ConnectionMethod::OpenOk(OpenOk::{ reserved_1: "x", }),
+      @connection.ConnectionMethod::@connection.OpenOk(@connection.OpenOk::{
+        reserved_1: "x",
+      }),
     ] {
     let raised = try {
       let _ = enc(bad)
       false
     } catch {
-      ConnectionError::ValueOutOfRange(_) => true
+      @connection.ConnectionError::ValueOutOfRange(_) => true
       _ => false
     }
     @test.assert_eq(raised, true)
@@ -150,7 +161,7 @@ test "reserved fields raise" {
 test "oversized short strings raise" {
   let raised = try {
     let _ = enc(
-      ConnectionMethod::StartOk(StartOk::{
+      @connection.ConnectionMethod::@connection.StartOk(@connection.StartOk::{
         client_properties: @table.FieldTable::new(),
         mechanism: "x".repeat(256),
         response: "",
@@ -159,7 +170,7 @@ test "oversized short strings raise" {
     )
     false
   } catch {
-    ConnectionError::ValueOutOfRange(_) => true
+    @connection.ConnectionError::ValueOutOfRange(_) => true
     _ => false
   }
   @test.assert_eq(raised, true)
@@ -173,8 +184,8 @@ test "connection method golden decode" {
     b"\x00\x0a\x00\x0a\x00\x09\x00\x00\x00\x00\x00\x00\x00\x05PLAIN\x00\x00\x00\x05en_US\x00\x0a\x00\x0b\x00\x00\x00\x00\x05PLAIN\x00\x00\x00\x05guest\x05en_US\x00\x0a\x00\x1e\x07\xff\x00\x02\x00\x00\x00\x3c\x00\x0a\x00\x1f\x07\xff\x00\x02\x00\x00\x00\x3c\x00\x0a\x00\x28\x01/\x00\x00\x00\x0a\x00\x29\x00\x00\x0a\x00\x32\x00\xc8\x07Goodbye\x00\x00\x00\x00\x00\x0a\x00\x33",
   )
   @test.assert_eq(
-    ConnectionMethod::decode(r),
-    ConnectionMethod::Start(Start::{
+    @connection.ConnectionMethod::decode(r),
+    @connection.ConnectionMethod::@connection.Start(@connection.Start::{
       version_major: b'\x00',
       version_minor: b'\x09',
       server_properties: @table.FieldTable::new(),
@@ -183,8 +194,8 @@ test "connection method golden decode" {
     }),
   )
   @test.assert_eq(
-    ConnectionMethod::decode(r),
-    ConnectionMethod::StartOk(StartOk::{
+    @connection.ConnectionMethod::decode(r),
+    @connection.ConnectionMethod::@connection.StartOk(@connection.StartOk::{
       client_properties: @table.FieldTable::new(),
       mechanism: "PLAIN",
       response: "guest",
@@ -192,43 +203,48 @@ test "connection method golden decode" {
     }),
   )
   @test.assert_eq(
-    ConnectionMethod::decode(r),
-    ConnectionMethod::Tune(Tune::{
+    @connection.ConnectionMethod::decode(r),
+    @connection.ConnectionMethod::@connection.Tune(@connection.Tune::{
       channel_max: (2047).to_uint16(),
       frame_max: 131072,
       heartbeat: (60).to_uint16(),
     }),
   )
   @test.assert_eq(
-    ConnectionMethod::decode(r),
-    ConnectionMethod::TuneOk(TuneOk::{
+    @connection.ConnectionMethod::decode(r),
+    @connection.ConnectionMethod::@connection.TuneOk(@connection.TuneOk::{
       channel_max: (2047).to_uint16(),
       frame_max: 131072,
       heartbeat: (60).to_uint16(),
     }),
   )
   @test.assert_eq(
-    ConnectionMethod::decode(r),
-    ConnectionMethod::Open(Open::{
+    @connection.ConnectionMethod::decode(r),
+    @connection.ConnectionMethod::@connection.Open(@connection.Open::{
       virtual_host: "/",
       reserved_1: "",
       reserved_2: false,
     }),
   )
   @test.assert_eq(
-    ConnectionMethod::decode(r),
-    ConnectionMethod::OpenOk(OpenOk::{ reserved_1: "", }),
+    @connection.ConnectionMethod::decode(r),
+    @connection.ConnectionMethod::@connection.OpenOk(@connection.OpenOk::{
+      reserved_1: "",
+    }),
   )
   @test.assert_eq(
-    ConnectionMethod::decode(r),
-    ConnectionMethod::Close(Close::{
+    @connection.ConnectionMethod::decode(r),
+    @connection.ConnectionMethod::@connection.Close(@connection.Close::{
       reply_code: (200).to_uint16(),
       reply_text: "Goodbye",
       class_id: (0).to_uint16(),
       method_id: (0).to_uint16(),
     }),
   )
-  @test.assert_eq(ConnectionMethod::decode(r), ConnectionMethod::CloseOk(()))
+  @test.assert_eq(
+    @connection.ConnectionMethod::decode(r),
+    @connection.ConnectionMethod::CloseOk(()),
+  )
   @test.assert_eq(r.is_empty(), true)
 }
 
@@ -242,42 +258,44 @@ test "connection method roundtrip" {
   let client = @table.FieldTable::new()
   client.set("product", @table.FieldValue::ShortStr("moon-amqp"))
   let methods = [
-    ConnectionMethod::Start(Start::{
+    @connection.ConnectionMethod::@connection.Start(@connection.Start::{
       version_major: b'\x00',
       version_minor: b'\x09',
       server_properties: props,
       mechanisms: "AMQPLAIN PLAIN",
       locales: "en_US",
     }),
-    ConnectionMethod::StartOk(StartOk::{
+    @connection.ConnectionMethod::@connection.StartOk(@connection.StartOk::{
       client_properties: client,
       mechanism: "PLAIN",
       response: "guest",
       locale: "en_US",
     }),
-    ConnectionMethod::Tune(Tune::{
+    @connection.ConnectionMethod::@connection.Tune(@connection.Tune::{
       channel_max: (2047).to_uint16(),
       frame_max: 131072,
       heartbeat: (60).to_uint16(),
     }),
-    ConnectionMethod::TuneOk(TuneOk::{
+    @connection.ConnectionMethod::@connection.TuneOk(@connection.TuneOk::{
       channel_max: (2047).to_uint16(),
       frame_max: 131072,
       heartbeat: (60).to_uint16(),
     }),
-    ConnectionMethod::Open(Open::{
+    @connection.ConnectionMethod::@connection.Open(@connection.Open::{
       virtual_host: "/",
       reserved_1: "",
       reserved_2: false,
     }),
-    ConnectionMethod::OpenOk(OpenOk::{ reserved_1: "", }),
-    ConnectionMethod::Close(Close::{
+    @connection.ConnectionMethod::@connection.OpenOk(@connection.OpenOk::{
+      reserved_1: "",
+    }),
+    @connection.ConnectionMethod::@connection.Close(@connection.Close::{
       reply_code: (320).to_uint16(),
       reply_text: "CONNECTION_FORCED - shutdown",
       class_id: (0).to_uint16(),
       method_id: (0).to_uint16(),
     }),
-    ConnectionMethod::CloseOk(()),
+    @connection.ConnectionMethod::CloseOk(()),
   ]
   let w = @codec.Writer::new()
   for m in methods {
@@ -285,7 +303,7 @@ test "connection method roundtrip" {
   }
   let r = @codec.Reader::new(w.to_bytes())
   for m in methods {
-    @test.assert_eq(ConnectionMethod::decode(r), m)
+    @test.assert_eq(@connection.ConnectionMethod::decode(r), m)
   }
   @test.assert_eq(r.is_empty(), true)
 }
@@ -296,18 +314,22 @@ test "connection method roundtrip" {
 /// cut-off input is `Truncated`, and a bad field tag is `InvalidTable`.
 test "malformed methods raise" {
   let err = try {
-    let _ = ConnectionMethod::decode(@codec.Reader::new(b"\x00\x14\x00\x0a"))
+    let _ = @connection.ConnectionMethod::decode(
+      @codec.Reader::new(b"\x00\x14\x00\x0a"),
+    )
     None
   } catch {
-    ConnectionError::UnexpectedClass(c) => Some(c)
+    @connection.ConnectionError::UnexpectedClass(c) => Some(c)
     _ => None
   }
   @test.assert_eq(err, Some((20).to_uint16()))
   let err = try {
-    let _ = ConnectionMethod::decode(@codec.Reader::new(b"\x00\x0a\x00\x63"))
+    let _ = @connection.ConnectionMethod::decode(
+      @codec.Reader::new(b"\x00\x0a\x00\x63"),
+    )
     None
   } catch {
-    ConnectionError::UnknownMethod(m) => Some(m)
+    @connection.ConnectionError::UnknownMethod(m) => Some(m)
     _ => None
   }
   @test.assert_eq(err, Some((99).to_uint16()))
@@ -317,33 +339,33 @@ test "malformed methods raise" {
       b"\x00\x0a\x00\x32\x00\xc8\x07Good",
     ] {
     let raised = try {
-      let _ = ConnectionMethod::decode(@codec.Reader::new(bad))
+      let _ = @connection.ConnectionMethod::decode(@codec.Reader::new(bad))
       false
     } catch {
-      ConnectionError::Truncated => true
+      @connection.ConnectionError::Truncated => true
       _ => false
     }
     @test.assert_eq(raised, true)
   }
   let raised = try {
-    let _ = ConnectionMethod::decode(
+    let _ = @connection.ConnectionMethod::decode(
       @codec.Reader::new(b"\x00\x0a\x00\x32\x00\xc8\x01\xff"),
     )
     false
   } catch {
-    ConnectionError::InvalidUtf8 => true
+    @connection.ConnectionError::InvalidUtf8 => true
     _ => false
   }
   @test.assert_eq(raised, true)
   let err = try {
-    let _ = ConnectionMethod::decode(
+    let _ = @connection.ConnectionMethod::decode(
       @codec.Reader::new(
         b"\x00\x0a\x00\x0a\x00\x09\x00\x00\x00\x03\x01\x5a\x5a",
       ),
     )
     None
   } catch {
-    ConnectionError::InvalidTable(_) => Some(0)
+    @connection.ConnectionError::InvalidTable(_) => Some(0)
     _ => None
   }
   @test.assert_eq(err, Some(0))

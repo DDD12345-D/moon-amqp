@@ -14,7 +14,7 @@
 
 ///|
 /// Encode one exchange-class method to its payload bytes.
-fn exch_enc(m : ChannelMethod) -> Bytes raise ChannelError {
+fn exch_enc(m : @channel.ChannelMethod) -> Bytes raise @channel.ChannelError {
   let w = @codec.Writer::new()
   m.encode(w)
   w.to_bytes()
@@ -27,7 +27,7 @@ fn exch_enc(m : ChannelMethod) -> Bytes raise ChannelError {
 test "exchange methods golden encode" {
   @test.assert_eq(
     exch_enc(
-      ChannelMethod::ExchangeDeclare(ExchangeDeclare::{
+      @channel.ChannelMethod::@channel.ExchangeDeclare(@channel.ExchangeDeclare::{
         reserved_1: (0).to_uint16(),
         exchange: "logs",
         exchange_type: "fanout",
@@ -43,7 +43,7 @@ test "exchange methods golden encode" {
   )
   @test.assert_eq(
     exch_enc(
-      ChannelMethod::ExchangeDeclare(ExchangeDeclare::{
+      @channel.ChannelMethod::@channel.ExchangeDeclare(@channel.ExchangeDeclare::{
         reserved_1: (0).to_uint16(),
         exchange: "e",
         exchange_type: "t",
@@ -62,7 +62,7 @@ test "exchange methods golden encode" {
   args.set("a", @table.FieldValue::Bool(false))
   @test.assert_eq(
     exch_enc(
-      ChannelMethod::ExchangeDeclare(ExchangeDeclare::{
+      @channel.ChannelMethod::@channel.ExchangeDeclare(@channel.ExchangeDeclare::{
         reserved_1: (0).to_uint16(),
         exchange: "e",
         exchange_type: "t",
@@ -77,12 +77,12 @@ test "exchange methods golden encode" {
     b"\x00\x28\x00\x0a\x00\x00\x01e\x01t\x00\x00\x00\x00\x08\x01a\x74\x00\x01b\x74\x01",
   )
   @test.assert_eq(
-    exch_enc(ChannelMethod::ExchangeDeclareOk),
+    exch_enc(@channel.ChannelMethod::ExchangeDeclareOk),
     b"\x00\x28\x00\x0b",
   )
   @test.assert_eq(
     exch_enc(
-      ChannelMethod::ExchangeDelete(ExchangeDelete::{
+      @channel.ChannelMethod::@channel.ExchangeDelete(@channel.ExchangeDelete::{
         reserved_1: (0).to_uint16(),
         exchange: "logs",
         if_unused: false,
@@ -92,12 +92,12 @@ test "exchange methods golden encode" {
     b"\x00\x28\x00\x14\x00\x00\x04logs\x02",
   )
   @test.assert_eq(
-    exch_enc(ChannelMethod::ExchangeDeleteOk),
+    exch_enc(@channel.ChannelMethod::ExchangeDeleteOk),
     b"\x00\x28\x00\x15",
   )
   @test.assert_eq(
     exch_enc(
-      ChannelMethod::ExchangeBind(ExchangeBind::{
+      @channel.ChannelMethod::@channel.ExchangeBind(@channel.ExchangeBind::{
         reserved_1: (0).to_uint16(),
         destination: "d",
         source: "s",
@@ -108,10 +108,13 @@ test "exchange methods golden encode" {
     ),
     b"\x00\x28\x00\x1e\x00\x00\x01d\x01s\x01k\x00\x00\x00\x00\x00",
   )
-  @test.assert_eq(exch_enc(ChannelMethod::ExchangeBindOk), b"\x00\x28\x00\x1f")
+  @test.assert_eq(
+    exch_enc(@channel.ChannelMethod::ExchangeBindOk),
+    b"\x00\x28\x00\x1f",
+  )
   @test.assert_eq(
     exch_enc(
-      ChannelMethod::ExchangeUnbind(ExchangeUnbind::{
+      @channel.ChannelMethod::@channel.ExchangeUnbind(@channel.ExchangeUnbind::{
         reserved_1: (0).to_uint16(),
         destination: "d",
         source: "s",
@@ -123,7 +126,7 @@ test "exchange methods golden encode" {
     b"\x00\x28\x00\x28\x00\x00\x01d\x01s\x01k\x01\x00\x00\x00\x00",
   )
   @test.assert_eq(
-    exch_enc(ChannelMethod::ExchangeUnbindOk),
+    exch_enc(@channel.ChannelMethod::ExchangeUnbindOk),
     b"\x00\x28\x00\x33",
   )
 }
@@ -133,7 +136,7 @@ test "exchange methods golden encode" {
 test "exchange reserved-1 must be zero" {
   for
     bad in [
-      ChannelMethod::ExchangeDeclare(ExchangeDeclare::{
+      @channel.ChannelMethod::@channel.ExchangeDeclare(@channel.ExchangeDeclare::{
         reserved_1: (1).to_uint16(),
         exchange: "e",
         exchange_type: "t",
@@ -144,13 +147,13 @@ test "exchange reserved-1 must be zero" {
         no_wait: false,
         arguments: @table.FieldTable::new(),
       }),
-      ChannelMethod::ExchangeDelete(ExchangeDelete::{
+      @channel.ChannelMethod::@channel.ExchangeDelete(@channel.ExchangeDelete::{
         reserved_1: (1).to_uint16(),
         exchange: "e",
         if_unused: false,
         no_wait: false,
       }),
-      ChannelMethod::ExchangeBind(ExchangeBind::{
+      @channel.ChannelMethod::@channel.ExchangeBind(@channel.ExchangeBind::{
         reserved_1: (1).to_uint16(),
         destination: "d",
         source: "s",
@@ -158,7 +161,7 @@ test "exchange reserved-1 must be zero" {
         no_wait: false,
         arguments: @table.FieldTable::new(),
       }),
-      ChannelMethod::ExchangeUnbind(ExchangeUnbind::{
+      @channel.ChannelMethod::@channel.ExchangeUnbind(@channel.ExchangeUnbind::{
         reserved_1: (1).to_uint16(),
         destination: "d",
         source: "s",
@@ -171,7 +174,7 @@ test "exchange reserved-1 must be zero" {
       let _ = exch_enc(bad)
       false
     } catch {
-      ChannelError::ValueOutOfRange(_) => true
+      @channel.ChannelError::ValueOutOfRange(_) => true
       _ => false
     }
     @test.assert_eq(raised, true)
@@ -180,8 +183,10 @@ test "exchange reserved-1 must be zero" {
 
 ///|
 /// Decode one exchange-class method payload.
-fn exch_dec(payload : Bytes) -> ChannelMethod raise ChannelError {
-  ChannelMethod::decode(@codec.Reader::new(payload))
+fn exch_dec(
+  payload : Bytes,
+) -> @channel.ChannelMethod raise @channel.ChannelError {
+  @channel.ChannelMethod::decode(@codec.Reader::new(payload))
 }
 
 ///|
@@ -190,7 +195,7 @@ fn exch_dec(payload : Bytes) -> ChannelMethod raise ChannelError {
 test "exchange methods golden decode" {
   @test.assert_eq(
     exch_dec(b"\x00\x28\x00\x0a\x00\x00\x04logs\x06fanout\x02\x00\x00\x00\x00"),
-    ChannelMethod::ExchangeDeclare(ExchangeDeclare::{
+    @channel.ChannelMethod::@channel.ExchangeDeclare(@channel.ExchangeDeclare::{
       reserved_1: (0).to_uint16(),
       exchange: "logs",
       exchange_type: "fanout",
@@ -204,7 +209,7 @@ test "exchange methods golden decode" {
   )
   @test.assert_eq(
     exch_dec(b"\x00\x28\x00\x0a\x00\x00\x01e\x01t\x18\x00\x00\x00\x00"),
-    ChannelMethod::ExchangeDeclare(ExchangeDeclare::{
+    @channel.ChannelMethod::@channel.ExchangeDeclare(@channel.ExchangeDeclare::{
       reserved_1: (0).to_uint16(),
       exchange: "e",
       exchange_type: "t",
@@ -223,7 +228,7 @@ test "exchange methods golden decode" {
     exch_dec(
       b"\x00\x28\x00\x0a\x00\x00\x01e\x01t\x00\x00\x00\x00\x08\x01a\x74\x00\x01b\x74\x01",
     ),
-    ChannelMethod::ExchangeDeclare(ExchangeDeclare::{
+    @channel.ChannelMethod::@channel.ExchangeDeclare(@channel.ExchangeDeclare::{
       reserved_1: (0).to_uint16(),
       exchange: "e",
       exchange_type: "t",
@@ -237,11 +242,11 @@ test "exchange methods golden decode" {
   )
   @test.assert_eq(
     exch_dec(b"\x00\x28\x00\x0b"),
-    ChannelMethod::ExchangeDeclareOk,
+    @channel.ChannelMethod::ExchangeDeclareOk,
   )
   @test.assert_eq(
     exch_dec(b"\x00\x28\x00\x14\x00\x00\x04logs\x02"),
-    ChannelMethod::ExchangeDelete(ExchangeDelete::{
+    @channel.ChannelMethod::@channel.ExchangeDelete(@channel.ExchangeDelete::{
       reserved_1: (0).to_uint16(),
       exchange: "logs",
       if_unused: false,
@@ -250,11 +255,11 @@ test "exchange methods golden decode" {
   )
   @test.assert_eq(
     exch_dec(b"\x00\x28\x00\x15"),
-    ChannelMethod::ExchangeDeleteOk,
+    @channel.ChannelMethod::ExchangeDeleteOk,
   )
   @test.assert_eq(
     exch_dec(b"\x00\x28\x00\x1e\x00\x00\x01d\x01s\x01k\x00\x00\x00\x00\x00"),
-    ChannelMethod::ExchangeBind(ExchangeBind::{
+    @channel.ChannelMethod::@channel.ExchangeBind(@channel.ExchangeBind::{
       reserved_1: (0).to_uint16(),
       destination: "d",
       source: "s",
@@ -263,10 +268,13 @@ test "exchange methods golden decode" {
       arguments: @table.FieldTable::new(),
     }),
   )
-  @test.assert_eq(exch_dec(b"\x00\x28\x00\x1f"), ChannelMethod::ExchangeBindOk)
+  @test.assert_eq(
+    exch_dec(b"\x00\x28\x00\x1f"),
+    @channel.ChannelMethod::ExchangeBindOk,
+  )
   @test.assert_eq(
     exch_dec(b"\x00\x28\x00\x28\x00\x00\x01d\x01s\x01k\x01\x00\x00\x00\x00"),
-    ChannelMethod::ExchangeUnbind(ExchangeUnbind::{
+    @channel.ChannelMethod::@channel.ExchangeUnbind(@channel.ExchangeUnbind::{
       reserved_1: (0).to_uint16(),
       destination: "d",
       source: "s",
@@ -277,7 +285,7 @@ test "exchange methods golden decode" {
   )
   @test.assert_eq(
     exch_dec(b"\x00\x28\x00\x33"),
-    ChannelMethod::ExchangeUnbindOk,
+    @channel.ChannelMethod::ExchangeUnbindOk,
   )
 }
 
@@ -288,7 +296,7 @@ test "exchange methods roundtrip" {
   args.set("x-match", @table.FieldValue::ShortStr("all"))
   for
     m in [
-      ChannelMethod::ExchangeDeclare(ExchangeDeclare::{
+      @channel.ChannelMethod::@channel.ExchangeDeclare(@channel.ExchangeDeclare::{
         reserved_1: (0).to_uint16(),
         exchange: "logs",
         exchange_type: "fanout",
@@ -299,7 +307,7 @@ test "exchange methods roundtrip" {
         no_wait: false,
         arguments: @table.FieldTable::new(),
       }),
-      ChannelMethod::ExchangeDeclare(ExchangeDeclare::{
+      @channel.ChannelMethod::@channel.ExchangeDeclare(@channel.ExchangeDeclare::{
         reserved_1: (0).to_uint16(),
         exchange: "h",
         exchange_type: "headers",
@@ -310,15 +318,15 @@ test "exchange methods roundtrip" {
         no_wait: true,
         arguments: args,
       }),
-      ChannelMethod::ExchangeDeclareOk,
-      ChannelMethod::ExchangeDelete(ExchangeDelete::{
+      @channel.ChannelMethod::ExchangeDeclareOk,
+      @channel.ChannelMethod::@channel.ExchangeDelete(@channel.ExchangeDelete::{
         reserved_1: (0).to_uint16(),
         exchange: "logs",
         if_unused: true,
         no_wait: true,
       }),
-      ChannelMethod::ExchangeDeleteOk,
-      ChannelMethod::ExchangeBind(ExchangeBind::{
+      @channel.ChannelMethod::ExchangeDeleteOk,
+      @channel.ChannelMethod::@channel.ExchangeBind(@channel.ExchangeBind::{
         reserved_1: (0).to_uint16(),
         destination: "dest",
         source: "src",
@@ -326,8 +334,8 @@ test "exchange methods roundtrip" {
         no_wait: false,
         arguments: @table.FieldTable::new(),
       }),
-      ChannelMethod::ExchangeBindOk,
-      ChannelMethod::ExchangeUnbind(ExchangeUnbind::{
+      @channel.ChannelMethod::ExchangeBindOk,
+      @channel.ChannelMethod::@channel.ExchangeUnbind(@channel.ExchangeUnbind::{
         reserved_1: (0).to_uint16(),
         destination: "dest",
         source: "src",
@@ -335,7 +343,7 @@ test "exchange methods roundtrip" {
         no_wait: true,
         arguments: @table.FieldTable::new(),
       }),
-      ChannelMethod::ExchangeUnbindOk,
+      @channel.ChannelMethod::ExchangeUnbindOk,
     ] {
     @test.assert_eq(exch_dec(exch_enc(m)), m)
   }

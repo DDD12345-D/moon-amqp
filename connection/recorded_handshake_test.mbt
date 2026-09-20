@@ -47,13 +47,17 @@ let recorded_protocol_header : Bytes = b"\x41\x4d\x51\x50\x00\x00\x09\x01"
 
 ///|
 /// Decode one method payload.
-fn fixture_dec(payload : Bytes) -> ConnectionMethod raise ConnectionError {
-  ConnectionMethod::decode(@codec.Reader::new(payload))
+fn fixture_dec(
+  payload : Bytes,
+) -> @connection.ConnectionMethod raise @connection.ConnectionError {
+  @connection.ConnectionMethod::decode(@codec.Reader::new(payload))
 }
 
 ///|
 /// Encode one method to its payload bytes.
-fn fixture_enc(m : ConnectionMethod) -> Bytes raise ConnectionError {
+fn fixture_enc(
+  m : @connection.ConnectionMethod,
+) -> Bytes raise @connection.ConnectionError {
   let w = @codec.Writer::new()
   m.encode(w)
   w.to_bytes()
@@ -89,7 +93,7 @@ fn same_value(a : @table.FieldValue, b : @table.FieldValue) -> Bool {
 /// properties, mechanisms and locales.
 test "real RabbitMQ Start decodes" {
   match fixture_dec(server_start) {
-    ConnectionMethod::Start(s) => {
+    @connection.ConnectionMethod::Start(s) => {
       @test.assert_eq(s.version_major, b'\x00')
       @test.assert_eq(s.version_minor, b'\x09')
       @test.assert_eq(s.mechanisms, "AMQPLAIN ANONYMOUS PLAIN")
@@ -143,7 +147,7 @@ test "real client Tune-Ok and Open re-encode identically" {
 /// is stable and decodes back to the same key-value pairs.
 test "real client Start-Ok decodes and roundtrips" {
   match fixture_dec(client_start_ok) {
-    ConnectionMethod::StartOk(s) => {
+    @connection.ConnectionMethod::StartOk(s) => {
       @test.assert_eq(s.mechanism, "PLAIN")
       @test.assert_eq(s.response, guest_response())
       @test.assert_eq(s.locale, "en_US")
@@ -159,10 +163,10 @@ test "real client Start-Ok decodes and roundtrips" {
         s.client_properties.get("platform"),
         Some(@table.FieldValue::LongStr("Node.JS v24.21.0")),
       )
-      let once = fixture_enc(ConnectionMethod::StartOk(s))
+      let once = fixture_enc(@connection.ConnectionMethod::StartOk(s))
       @test.assert_eq(fixture_enc(fixture_dec(once)), once)
       match fixture_dec(once) {
-        ConnectionMethod::StartOk(s2) =>
+        @connection.ConnectionMethod::StartOk(s2) =>
           for (k, v) in s.client_properties.iter() {
             match s2.client_properties.get(k) {
               Some(v2) => @test.assert_eq(same_value(v, v2), true)
@@ -181,16 +185,16 @@ test "real client Start-Ok decodes and roundtrips" {
 /// negotiated values match the real Tune: channel-max 2047, frame-max
 /// 131072, heartbeat 60.
 test "recorded handshake drives the state machine to Open" {
-  let h = Handshake::new()
+  let h = @connection.Handshake::new()
   let w = @codec.Writer::new()
-  Handshake::write_protocol_header(w)
+  @connection.Handshake::write_protocol_header(w)
   @test.assert_eq(w.to_bytes(), recorded_protocol_header)
 
   h.receive(fixture_dec(server_start))
-  @test.assert_eq(h.state(), HandshakeState::AwaitTune)
+  @test.assert_eq(h.state(), @connection.HandshakeState::AwaitTune)
   match
     h.start_ok(@table.FieldTable::new(), "PLAIN", guest_response(), "en_US") {
-    ConnectionMethod::StartOk(s) => {
+    @connection.ConnectionMethod::StartOk(s) => {
       @test.assert_eq(s.mechanism, "PLAIN")
       @test.assert_eq(s.response, guest_response())
     }
@@ -198,10 +202,10 @@ test "recorded handshake drives the state machine to Open" {
   }
 
   h.receive(fixture_dec(server_tune))
-  @test.assert_eq(h.state(), HandshakeState::AwaitOpenOk)
+  @test.assert_eq(h.state(), @connection.HandshakeState::AwaitOpenOk)
   @test.assert_eq(
     fixture_dec(server_tune),
-    ConnectionMethod::Tune(Tune::{
+    @connection.ConnectionMethod::@connection.Tune(@connection.Tune::{
       channel_max: (2047).to_uint16(),
       frame_max: 131072,
       heartbeat: (60).to_uint16(),
@@ -209,7 +213,7 @@ test "recorded handshake drives the state machine to Open" {
   )
   @test.assert_eq(
     h.tune_ok((2047).to_uint16(), 131072, (60).to_uint16()),
-    ConnectionMethod::TuneOk(TuneOk::{
+    @connection.ConnectionMethod::@connection.TuneOk(@connection.TuneOk::{
       channel_max: (2047).to_uint16(),
       frame_max: 131072,
       heartbeat: (60).to_uint16(),
@@ -217,7 +221,7 @@ test "recorded handshake drives the state machine to Open" {
   )
   @test.assert_eq(
     h.open("/"),
-    ConnectionMethod::Open(Open::{
+    @connection.ConnectionMethod::@connection.Open(@connection.Open::{
       virtual_host: "/",
       reserved_1: "",
       reserved_2: false,
@@ -225,5 +229,5 @@ test "recorded handshake drives the state machine to Open" {
   )
 
   h.receive(fixture_dec(server_open_ok))
-  @test.assert_eq(h.state(), HandshakeState::Open)
+  @test.assert_eq(h.state(), @connection.HandshakeState::@connection.Open)
 }

@@ -14,8 +14,11 @@
 
 ///|
 /// A Basic.Deliver for the recorded consumer tag.
-fn fixture_deliver(delivery_tag : UInt64, redelivered : Bool) -> BasicDeliver {
-  BasicDeliver::{
+fn fixture_deliver(
+  delivery_tag : UInt64,
+  redelivered : Bool,
+) -> @basic.BasicDeliver {
+  @basic.BasicDeliver::{
     consumer_tag: consume_ctag,
     delivery_tag,
     redelivered,
@@ -38,7 +41,7 @@ fn fixture_deliver(delivery_tag : UInt64, redelivered : Bool) -> BasicDeliver {
 test "broker fixture: consume session client bytes match amqplib" {
   @test.assert_eq(
     basic_enc(
-      BasicMethod::BasicQos(BasicQos::{
+      @basic.BasicMethod::@basic.BasicQos(@basic.BasicQos::{
         prefetch_size: (0).reinterpret_as_uint(),
         prefetch_count: (2).to_uint16(),
         global: false,
@@ -48,7 +51,7 @@ test "broker fixture: consume session client bytes match amqplib" {
   )
   @test.assert_eq(
     basic_enc(
-      BasicMethod::BasicConsume(BasicConsume::{
+      @basic.BasicMethod::@basic.BasicConsume(@basic.BasicConsume::{
         reserved_1: (0).to_uint16(),
         queue: "consume-q",
         consumer_tag: "",
@@ -63,7 +66,7 @@ test "broker fixture: consume session client bytes match amqplib" {
   )
   @test.assert_eq(
     basic_enc(
-      BasicMethod::BasicAck(BasicAck::{
+      @basic.BasicMethod::@basic.BasicAck(@basic.BasicAck::{
         delivery_tag: (1).to_uint64(),
         multiple: false,
       }),
@@ -72,7 +75,7 @@ test "broker fixture: consume session client bytes match amqplib" {
   )
   @test.assert_eq(
     basic_enc(
-      BasicMethod::BasicNack(BasicNack::{
+      @basic.BasicMethod::@basic.BasicNack(@basic.BasicNack::{
         delivery_tag: (2).to_uint64(),
         multiple: false,
         requeue: true,
@@ -82,7 +85,7 @@ test "broker fixture: consume session client bytes match amqplib" {
   )
   @test.assert_eq(
     basic_enc(
-      BasicMethod::BasicReject(BasicReject::{
+      @basic.BasicMethod::@basic.BasicReject(@basic.BasicReject::{
         delivery_tag: (3).to_uint64(),
         requeue: false,
       }),
@@ -91,7 +94,7 @@ test "broker fixture: consume session client bytes match amqplib" {
   )
   @test.assert_eq(
     basic_enc(
-      BasicMethod::BasicGet(BasicGet::{
+      @basic.BasicMethod::@basic.BasicGet(@basic.BasicGet::{
         reserved_1: (0).to_uint16(),
         queue: "consume-q",
         no_ack: false,
@@ -101,7 +104,7 @@ test "broker fixture: consume session client bytes match amqplib" {
   )
   @test.assert_eq(
     basic_enc(
-      BasicMethod::BasicCancel(BasicCancel::{
+      @basic.BasicMethod::@basic.BasicCancel(@basic.BasicCancel::{
         consumer_tag: consume_ctag,
         nowait: false,
       }),
@@ -114,16 +117,21 @@ test "broker fixture: consume session client bytes match amqplib" {
 /// The server-bound frames from the same session decode back to
 /// their values.
 test "broker fixture: consume session server bytes decode" {
-  @test.assert_eq(basic_dec(b"\x00\x3c\x00\x0b"), BasicMethod::BasicQosOk(()))
+  @test.assert_eq(
+    basic_dec(b"\x00\x3c\x00\x0b"),
+    @basic.BasicMethod::BasicQosOk(()),
+  )
   @test.assert_eq(
     basic_dec(b"\x00\x3c\x00\x15\x1famq.ctag-hIvI1ZQNT97KFUbcdj8CSQ"),
-    BasicMethod::BasicConsumeOk(BasicConsumeOk::{ consumer_tag: consume_ctag, }),
+    @basic.BasicMethod::@basic.BasicConsumeOk(@basic.BasicConsumeOk::{
+      consumer_tag: consume_ctag,
+    }),
   )
   @test.assert_eq(
     basic_dec(
       b"\x00\x3c\x00\x3c\x1famq.ctag-hIvI1ZQNT97KFUbcdj8CSQ\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x09consume-q",
     ),
-    BasicMethod::BasicDeliver(BasicDeliver::{
+    @basic.BasicMethod::@basic.BasicDeliver(@basic.BasicDeliver::{
       consumer_tag: consume_ctag,
       delivery_tag: (1).to_uint64(),
       redelivered: false,
@@ -135,7 +143,7 @@ test "broker fixture: consume session server bytes decode" {
     basic_dec(
       b"\x00\x3c\x00\x3c\x1famq.ctag-hIvI1ZQNT97KFUbcdj8CSQ\x00\x00\x00\x00\x00\x00\x00\x04\x01\x00\x09consume-q",
     ),
-    BasicMethod::BasicDeliver(BasicDeliver::{
+    @basic.BasicMethod::@basic.BasicDeliver(@basic.BasicDeliver::{
       consumer_tag: consume_ctag,
       delivery_tag: (4).to_uint64(),
       redelivered: true,
@@ -145,11 +153,15 @@ test "broker fixture: consume session server bytes decode" {
   )
   @test.assert_eq(
     basic_dec(b"\x00\x3c\x00\x48\x00"),
-    BasicMethod::BasicGetEmpty(BasicGetEmpty::{ cluster_id: "", }),
+    @basic.BasicMethod::@basic.BasicGetEmpty(@basic.BasicGetEmpty::{
+      cluster_id: "",
+    }),
   )
   @test.assert_eq(
     basic_dec(b"\x00\x3c\x00\x1f\x1famq.ctag-hIvI1ZQNT97KFUbcdj8CSQ"),
-    BasicMethod::BasicCancelOk(BasicCancelOk::{ consumer_tag: consume_ctag, }),
+    @basic.BasicMethod::@basic.BasicCancelOk(@basic.BasicCancelOk::{
+      consumer_tag: consume_ctag,
+    }),
   )
 }
 
@@ -159,8 +171,12 @@ test "broker fixture: consume session server bytes decode" {
 /// requeue brings it back as delivery 4 with the redelivered flag;
 /// reject 3 and ack 4 settle everything.
 test "broker fixture: the recorded settlement sequence replays" {
-  let d = Dispatch::new()
-  d.register(Consumer::{ tag: consume_ctag, queue: "consume-q", no_ack: false, })
+  let d = @basic.Dispatch::new()
+  d.register(@basic.Consumer::{
+    tag: consume_ctag,
+    queue: "consume-q",
+    no_ack: false,
+  })
   d.set_prefetch((2).to_uint16())
   let _ = d.deliver(fixture_deliver((1).to_uint64(), false))
   let _ = d.deliver(fixture_deliver((2).to_uint64(), false))

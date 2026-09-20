@@ -27,6 +27,13 @@ pub(all) enum HeartbeatAction {
 } derive(Eq, @debug.Debug)
 
 ///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend HeartbeatAction with Eq::{not_equal, equal}
+
+///|
+pub extend HeartbeatAction with @debug.Debug::{to_repr}
+
+///|
 /// Heartbeat bookkeeping for one connection (§4.2.7). The caller
 /// drives it: after every frame sent or received, call `note_sent`
 /// or `note_received` with a monotonic timestamp in seconds; before

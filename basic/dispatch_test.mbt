@@ -15,8 +15,11 @@
 ///|
 /// A Basic.Deliver for the consumer `tag` with the given delivery
 /// tag.
-fn mk_deliver(consumer_tag : String, delivery_tag : UInt64) -> BasicDeliver {
-  BasicDeliver::{
+fn mk_deliver(
+  consumer_tag : String,
+  delivery_tag : UInt64,
+) -> @basic.BasicDeliver {
+  @basic.BasicDeliver::{
     consumer_tag,
     delivery_tag,
     redelivered: false,
@@ -27,8 +30,11 @@ fn mk_deliver(consumer_tag : String, delivery_tag : UInt64) -> BasicDeliver {
 
 ///|
 /// A redelivered Basic.Deliver.
-fn mk_redeliver(consumer_tag : String, delivery_tag : UInt64) -> BasicDeliver {
-  BasicDeliver::{
+fn mk_redeliver(
+  consumer_tag : String,
+  delivery_tag : UInt64,
+) -> @basic.BasicDeliver {
+  @basic.BasicDeliver::{
     consumer_tag,
     delivery_tag,
     redelivered: true,
@@ -39,15 +45,15 @@ fn mk_redeliver(consumer_tag : String, delivery_tag : UInt64) -> BasicDeliver {
 
 ///|
 /// A consumer draining `queue`.
-fn mk_consumer(tag : String, no_ack : Bool) -> Consumer {
-  Consumer::{ tag, queue: "consume-q", no_ack, }
+fn mk_consumer(tag : String, no_ack : Bool) -> @basic.Consumer {
+  @basic.Consumer::{ tag, queue: "consume-q", no_ack, }
 }
 
 ///|
 /// Multiple consumers: delivers route by consumer tag, and the
 /// deliveries interleave without disturbing each other.
 test "dispatch routes delivers to the right consumer" {
-  let d = Dispatch::new()
+  let d = @basic.Dispatch::new()
   d.register(mk_consumer("ctag-a", false))
   d.register(mk_consumer("ctag-b", false))
   let da = d.deliver(mk_deliver("ctag-a", (1).to_uint64()))
@@ -62,12 +68,12 @@ test "dispatch routes delivers to the right consumer" {
 /// A deliver for a tag that was never registered raises
 /// `UnknownConsumer`.
 test "deliver to an unknown consumer raises" {
-  let d = Dispatch::new()
+  let d = @basic.Dispatch::new()
   let raised = try {
     let _ = d.deliver(mk_deliver("ctag-x", (1).to_uint64()))
     false
   } catch {
-    BasicError::UnknownConsumer("ctag-x") => true
+    @basic.BasicError::UnknownConsumer("ctag-x") => true
     _ => false
   }
   @test.assert_eq(raised, true)
@@ -76,13 +82,13 @@ test "deliver to an unknown consumer raises" {
 ///|
 /// Two consumers may not share a tag.
 test "registering a duplicate consumer tag raises" {
-  let d = Dispatch::new()
+  let d = @basic.Dispatch::new()
   d.register(mk_consumer("ctag-a", false))
   let raised = try {
     d.register(mk_consumer("ctag-a", false))
     false
   } catch {
-    BasicError::ConsumerExists(_) => true
+    @basic.BasicError::ConsumerExists(_) => true
     _ => false
   }
   @test.assert_eq(raised, true)
@@ -92,7 +98,7 @@ test "registering a duplicate consumer tag raises" {
 /// Unregistering removes the consumer: deliveries to it fail, while
 /// the others keep working.
 test "unregister removes a consumer" {
-  let d = Dispatch::new()
+  let d = @basic.Dispatch::new()
   d.register(mk_consumer("ctag-a", false))
   d.register(mk_consumer("ctag-b", false))
   d.unregister("ctag-a")
@@ -100,7 +106,7 @@ test "unregister removes a consumer" {
     let _ = d.deliver(mk_deliver("ctag-a", (1).to_uint64()))
     false
   } catch {
-    BasicError::UnknownConsumer(_) => true
+    @basic.BasicError::UnknownConsumer(_) => true
     _ => false
   }
   @test.assert_eq(raised, true)
@@ -111,12 +117,12 @@ test "unregister removes a consumer" {
 ///|
 /// Unregistering an unknown tag raises.
 test "unregistering an unknown consumer raises" {
-  let d = Dispatch::new()
+  let d = @basic.Dispatch::new()
   let raised = try {
     d.unregister("ctag-x")
     false
   } catch {
-    BasicError::UnknownConsumer(_) => true
+    @basic.BasicError::UnknownConsumer(_) => true
     _ => false
   }
   @test.assert_eq(raised, true)
@@ -125,7 +131,7 @@ test "unregistering an unknown consumer raises" {
 ///|
 /// Ack settles exactly the named delivery.
 test "ack settles one delivery" {
-  let d = Dispatch::new()
+  let d = @basic.Dispatch::new()
   d.register(mk_consumer("ctag-a", false))
   let _ = d.deliver(mk_deliver("ctag-a", (1).to_uint64()))
   let _ = d.deliver(mk_deliver("ctag-a", (2).to_uint64()))
@@ -139,7 +145,7 @@ test "ack settles one delivery" {
 /// Ack with multiple settles every outstanding delivery up to and
 /// including the tag, leaving later ones outstanding.
 test "ack multiple settles all deliveries up to the tag" {
-  let d = Dispatch::new()
+  let d = @basic.Dispatch::new()
   d.register(mk_consumer("ctag-a", false))
   let _ = d.deliver(mk_deliver("ctag-a", (1).to_uint64()))
   let _ = d.deliver(mk_deliver("ctag-a", (2).to_uint64()))
@@ -154,7 +160,7 @@ test "ack multiple settles all deliveries up to the tag" {
 ///|
 /// Ack only touches the matching consumer's deliveries.
 test "ack leaves other consumers' deliveries outstanding" {
-  let d = Dispatch::new()
+  let d = @basic.Dispatch::new()
   d.register(mk_consumer("ctag-a", false))
   d.register(mk_consumer("ctag-b", false))
   let _ = d.deliver(mk_deliver("ctag-a", (1).to_uint64()))
@@ -167,13 +173,13 @@ test "ack leaves other consumers' deliveries outstanding" {
 ///|
 /// Settling a tag that was never delivered raises `UnknownDelivery`.
 test "ack of an unknown tag raises" {
-  let d = Dispatch::new()
+  let d = @basic.Dispatch::new()
   d.register(mk_consumer("ctag-a", false))
   let raised = try {
     d.ack((9).to_uint64(), false)
     false
   } catch {
-    BasicError::UnknownDelivery(_) => true
+    @basic.BasicError::UnknownDelivery(_) => true
     _ => false
   }
   @test.assert_eq(raised, true)
@@ -182,7 +188,7 @@ test "ack of an unknown tag raises" {
 ///|
 /// A delivery may be settled only once.
 test "ack of an already settled tag raises" {
-  let d = Dispatch::new()
+  let d = @basic.Dispatch::new()
   d.register(mk_consumer("ctag-a", false))
   let _ = d.deliver(mk_deliver("ctag-a", (1).to_uint64()))
   d.ack((1).to_uint64(), false)
@@ -190,7 +196,7 @@ test "ack of an already settled tag raises" {
     d.ack((1).to_uint64(), false)
     false
   } catch {
-    BasicError::UnknownDelivery(_) => true
+    @basic.BasicError::UnknownDelivery(_) => true
     _ => false
   }
   @test.assert_eq(raised, true)
@@ -199,7 +205,7 @@ test "ack of an already settled tag raises" {
 ///|
 /// Nack with requeue sends the delivery back for redelivery.
 test "nack with requeue returns the delivery to the queue" {
-  let d = Dispatch::new()
+  let d = @basic.Dispatch::new()
   d.register(mk_consumer("ctag-a", false))
   let _ = d.deliver(mk_deliver("ctag-a", (1).to_uint64()))
   let _ = d.deliver(mk_deliver("ctag-a", (2).to_uint64()))
@@ -212,7 +218,7 @@ test "nack with requeue returns the delivery to the queue" {
 ///|
 /// Nack without requeue discards the delivery.
 test "nack without requeue discards the delivery" {
-  let d = Dispatch::new()
+  let d = @basic.Dispatch::new()
   d.register(mk_consumer("ctag-a", false))
   let _ = d.deliver(mk_deliver("ctag-a", (1).to_uint64()))
   d.nack((1).to_uint64(), false, false)
@@ -224,7 +230,7 @@ test "nack without requeue discards the delivery" {
 /// Nack with multiple settles every outstanding delivery up to the
 /// tag.
 test "nack multiple settles all deliveries up to the tag" {
-  let d = Dispatch::new()
+  let d = @basic.Dispatch::new()
   d.register(mk_consumer("ctag-a", false))
   let _ = d.deliver(mk_deliver("ctag-a", (1).to_uint64()))
   let _ = d.deliver(mk_deliver("ctag-a", (2).to_uint64()))
@@ -239,12 +245,12 @@ test "nack multiple settles all deliveries up to the tag" {
 /// Reject with requeue sends the delivery back; without it the
 /// delivery is discarded.
 test "reject requeues or discards one delivery" {
-  let d = Dispatch::new()
+  let d = @basic.Dispatch::new()
   d.register(mk_consumer("ctag-a", false))
   let _ = d.deliver(mk_deliver("ctag-a", (1).to_uint64()))
   d.reject((1).to_uint64(), true)
   @test.assert_eq(d.deliveries[0].state, Requeued)
-  let d2 = Dispatch::new()
+  let d2 = @basic.Dispatch::new()
   d2.register(mk_consumer("ctag-a", false))
   let _ = d2.deliver(mk_deliver("ctag-a", (1).to_uint64()))
   d2.reject((1).to_uint64(), false)
@@ -255,7 +261,7 @@ test "reject requeues or discards one delivery" {
 /// Recover with requeue returns every outstanding delivery;
 /// already settled deliveries are untouched.
 test "recover with requeue returns all outstanding deliveries" {
-  let d = Dispatch::new()
+  let d = @basic.Dispatch::new()
   d.register(mk_consumer("ctag-a", false))
   let _ = d.deliver(mk_deliver("ctag-a", (1).to_uint64()))
   let _ = d.deliver(mk_deliver("ctag-a", (2).to_uint64()))
@@ -270,7 +276,7 @@ test "recover with requeue returns all outstanding deliveries" {
 /// Recover without requeue redelivers the messages as-is, so they
 /// stay outstanding here.
 test "recover without requeue keeps deliveries outstanding" {
-  let d = Dispatch::new()
+  let d = @basic.Dispatch::new()
   d.register(mk_consumer("ctag-a", false))
   let _ = d.deliver(mk_deliver("ctag-a", (1).to_uint64()))
   d.recover(false)
@@ -282,7 +288,7 @@ test "recover without requeue keeps deliveries outstanding" {
 /// A no-ack consumer's deliveries settle on arrival and must not be
 /// acknowledged.
 test "deliveries to a no-ack consumer settle immediately" {
-  let d = Dispatch::new()
+  let d = @basic.Dispatch::new()
   d.register(mk_consumer("ctag-a", true))
   let delivery = d.deliver(mk_deliver("ctag-a", (1).to_uint64()))
   @test.assert_eq(delivery.state, Acked)
@@ -291,7 +297,7 @@ test "deliveries to a no-ack consumer settle immediately" {
     d.ack((1).to_uint64(), false)
     false
   } catch {
-    BasicError::UnknownDelivery(_) => true
+    @basic.BasicError::UnknownDelivery(_) => true
     _ => false
   }
   @test.assert_eq(raised, true)
@@ -300,7 +306,7 @@ test "deliveries to a no-ack consumer settle immediately" {
 ///|
 /// A redelivery records the redelivered flag.
 test "redelivery records the redelivered flag" {
-  let d = Dispatch::new()
+  let d = @basic.Dispatch::new()
   d.register(mk_consumer("ctag-a", false))
   let delivery = d.deliver(mk_redeliver("ctag-a", (4).to_uint64()))
   @test.assert_eq(delivery.redelivered, true)
@@ -310,7 +316,7 @@ test "redelivery records the redelivered flag" {
 /// The prefetch window gates deliveries: the third delivery of a
 /// prefetch-2 channel is refused until an ack frees room.
 test "prefetch gates deliveries" {
-  let d = Dispatch::new()
+  let d = @basic.Dispatch::new()
   d.register(mk_consumer("ctag-a", false))
   d.set_prefetch((2).to_uint16())
   let _ = d.deliver(mk_deliver("ctag-a", (1).to_uint64()))
@@ -320,7 +326,7 @@ test "prefetch gates deliveries" {
     let _ = d.deliver(mk_deliver("ctag-a", (3).to_uint64()))
     false
   } catch {
-    BasicError::PrefetchExceeded => true
+    @basic.BasicError::PrefetchExceeded => true
     _ => false
   }
   @test.assert_eq(raised, true)
@@ -334,7 +340,7 @@ test "prefetch gates deliveries" {
 ///|
 /// A prefetch window of 0 means no limit.
 test "prefetch of zero means no limit" {
-  let d = Dispatch::new()
+  let d = @basic.Dispatch::new()
   d.register(mk_consumer("ctag-a", false))
   let _ = d.deliver(mk_deliver("ctag-a", (1).to_uint64()))
   let _ = d.deliver(mk_deliver("ctag-a", (2).to_uint64()))
@@ -347,14 +353,14 @@ test "prefetch of zero means no limit" {
 /// Delivering the same outstanding tag again raises
 /// `DuplicateDelivery`.
 test "delivering the same outstanding tag again raises" {
-  let d = Dispatch::new()
+  let d = @basic.Dispatch::new()
   d.register(mk_consumer("ctag-a", false))
   let _ = d.deliver(mk_deliver("ctag-a", (1).to_uint64()))
   let raised = try {
     let _ = d.deliver(mk_deliver("ctag-a", (1).to_uint64()))
     false
   } catch {
-    BasicError::DuplicateDelivery(_) => true
+    @basic.BasicError::DuplicateDelivery(_) => true
     _ => false
   }
   @test.assert_eq(raised, true)

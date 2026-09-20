@@ -54,6 +54,13 @@ pub(all) struct BasicProperties {
 } derive(Eq, @debug.Debug)
 
 ///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend BasicProperties with Eq::{not_equal, equal}
+
+///|
+pub extend BasicProperties with @debug.Debug::{to_repr}
+
+///|
 /// A message with no properties set.
 pub fn BasicProperties::new() -> BasicProperties {
   BasicProperties::{
@@ -85,6 +92,13 @@ pub(all) struct ContentHeader {
   /// The message properties carried by this header.
   properties : BasicProperties
 } derive(Eq, @debug.Debug)
+
+///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend ContentHeader with Eq::{not_equal, equal}
+
+///|
+pub extend ContentHeader with @debug.Debug::{to_repr}
 
 ///|
 /// Append the content header payload to `w`.

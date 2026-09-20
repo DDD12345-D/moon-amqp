@@ -27,6 +27,13 @@ pub(all) struct Consumer {
 } derive(Eq, @debug.Debug)
 
 ///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend Consumer with Eq::{not_equal, equal}
+
+///|
+pub extend Consumer with @debug.Debug::{to_repr}
+
+///|
 /// The lifecycle of one delivery on a channel. `Unacked` entries
 /// form the prefetch window; every delivery ends in one of the
 /// three settled states.
@@ -42,6 +49,13 @@ pub(all) enum DeliveryState {
   /// Settled without requeue: the broker drops it.
   Discarded
 } derive(Eq, @debug.Debug)
+
+///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend DeliveryState with Eq::{not_equal, equal}
+
+///|
+pub extend DeliveryState with @debug.Debug::{to_repr}
 
 ///|
 /// One delivery routed to a consumer: the routing fields from
@@ -60,6 +74,13 @@ pub(all) struct Delivery {
   /// Settlement state (see `DeliveryState`).
   state : DeliveryState
 } derive(Eq, @debug.Debug)
+
+///|
+/// Explicit promotions: the implicit trait-method promotion is deprecated.
+pub extend Delivery with Eq::{not_equal, equal}
+
+///|
+pub extend Delivery with @debug.Debug::{to_repr}
 
 ///|
 /// Routes Basic.Deliver methods to registered consumers and tracks

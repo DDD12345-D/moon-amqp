@@ -14,8 +14,10 @@
 
 ///|
 /// Decode one method payload.
-fn dispatch_dec(payload : Bytes) -> ChannelMethod raise ChannelError {
-  ChannelMethod::decode(@codec.Reader::new(payload))
+fn dispatch_dec(
+  payload : Bytes,
+) -> @channel.ChannelMethod raise @channel.ChannelError {
+  @channel.ChannelMethod::decode(@codec.Reader::new(payload))
 }
 
 ///|
@@ -24,15 +26,19 @@ fn dispatch_dec(payload : Bytes) -> ChannelMethod raise ChannelError {
 test "class id dispatches to the right method" {
   @test.assert_eq(
     dispatch_dec(b"\x00\x14\x00\x0a\x00"),
-    ChannelMethod::ChannelOpen(ChannelOpen::{ reserved_1: "", }),
+    @channel.ChannelMethod::@channel.ChannelOpen(@channel.ChannelOpen::{
+      reserved_1: "",
+    }),
   )
   @test.assert_eq(
     dispatch_dec(b"\x00\x28\x00\x0b"),
-    ChannelMethod::ExchangeDeclareOk,
+    @channel.ChannelMethod::ExchangeDeclareOk,
   )
   @test.assert_eq(
     dispatch_dec(b"\x00\x32\x00\x1f\x00\x00\x00\x00"),
-    ChannelMethod::QueuePurgeOk(QueuePurgeOk::{ message_count: 0, }),
+    @channel.ChannelMethod::@channel.QueuePurgeOk(@channel.QueuePurgeOk::{
+      message_count: 0,
+    }),
   )
 }
 
@@ -45,7 +51,7 @@ test "unexpected class raises" {
     let _ = dispatch_dec(b"\x00\x0a\x00\x0a") // connection class
     None
   } catch {
-    ChannelError::UnexpectedClass(c) => Some(c)
+    @channel.ChannelError::UnexpectedClass(c) => Some(c)
     _ => None
   }
   @test.assert_eq(err_conn, Some((10).to_uint16()))
@@ -53,7 +59,7 @@ test "unexpected class raises" {
     let _ = dispatch_dec(b"\x00\x3c\x00\x0a") // basic class
     None
   } catch {
-    ChannelError::UnexpectedClass(c) => Some(c)
+    @channel.ChannelError::UnexpectedClass(c) => Some(c)
     _ => None
   }
   @test.assert_eq(err_basic, Some((60).to_uint16()))
@@ -73,7 +79,7 @@ test "unknown method raises" {
       let _ = dispatch_dec(payload)
       None
     } catch {
-      ChannelError::UnknownMethod(c, m) => Some((c, m))
+      @channel.ChannelError::UnknownMethod(c, m) => Some((c, m))
       _ => None
     }
     @test.assert_eq(err, Some((cls.to_uint16(), meth.to_uint16())))
@@ -88,7 +94,7 @@ test "truncated input raises" {
       let _ = dispatch_dec(payload)
       false
     } catch {
-      ChannelError::Truncated => true
+      @channel.ChannelError::Truncated => true
       _ => false
     }
     @test.assert_eq(raised, true)
@@ -102,7 +108,7 @@ test "invalid utf-8 raises" {
     let _ = dispatch_dec(b"\x00\x14\x00\x0b\x00\x00\x00\x02\xff\xfe")
     false
   } catch {
-    ChannelError::InvalidUtf8 => true
+    @channel.ChannelError::InvalidUtf8 => true
     _ => false
   }
   @test.assert_eq(raised, true)
@@ -117,7 +123,7 @@ test "malformed table raises" {
     )
     false
   } catch {
-    ChannelError::InvalidTable(_) => true
+    @channel.ChannelError::InvalidTable(_) => true
     _ => false
   }
   @test.assert_eq(raised, true)
@@ -128,7 +134,7 @@ test "malformed table raises" {
 /// hands the payload to `ChannelMethod::decode`, which dispatches on
 /// the class id and hands back the typed method.
 test "frame payload dispatches to a typed method" {
-  let m = ChannelMethod::QueueBind(QueueBind::{
+  let m = @channel.ChannelMethod::@channel.QueueBind(@channel.QueueBind::{
     reserved_1: (0).to_uint16(),
     queue: "q",
     exchange: "ex",
